@@ -1,0 +1,10 @@
+{
+    "config": {
+        "bin-dir": "bin/"
+    },
+    "minimum-stability": "dev",
+    "require": {
+        "symfony/yaml": "2.4.2",
+        "symfony/serializer": "2.4.2"
+    }
+}

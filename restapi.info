@@ -1,0 +1,9 @@
+name = Rest API
+description = Provides a REST API to write RESTful routes similar to Drupal 8 and Symfony.
+package = TegraZone
+core = 7.x
+
+files[] = inc/rest.inc
+
+dependencies[] = entity
+dependencies[] = xautoload

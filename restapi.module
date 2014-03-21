@@ -1,0 +1,74 @@
+<?php
+
+/**
+ * @file
+ * REST API module file.
+ */
+
+xautoload()->registerModulePsr4(__FILE__, 'src');
+
+use Drupal\restapi\YamlConfigDiscovery;
+use Drupal\restapi\RestServices\RestService;
+
+/**
+ * Implements hook_xautoload().
+ */
+function restapi_xautoload($api) {
+  $composer_path = drupal_get_path('module', 'restapi') . '/vendor/composer';
+  $api->absolute()->composerDir($composer_path);
+}
+
+/**
+ * Implements hook_menu().
+ */
+function restapi_menu() {
+  $config_discovery = new YamlConfigDiscovery();
+  $routes = $config_discovery->parsedConfig('restapi.routing.yml');
+
+  $items = array();
+  foreach ($routes as $route_name => $route) {
+    $items[$route['path']] = array(
+      'page callback' => 'restapi_callback',
+      'page arguments' => array($route_name),
+      'delivery callback' => 'restapi_output',
+      'access callback'   => TRUE,
+    );
+    if (isset($route['callback'])) {
+      $items[$route['path']]['page callback'] = $route['callback'];
+    }
+    if (isset($route['wildcards'])) {
+      $items[$route['path']]['page arguments'] = array($route_name, $route['wildcards']);
+    }
+  }
+
+  return $items;
+}
+
+/**
+ * Basic callback for a REST Service.
+ *
+ * @param string $route_name
+ *   The route identifier.
+ * @param string $etid
+ *   A passed entity ID if requesting a single entity.
+ *
+ * @return array
+ *   A formatted response to the clients request.
+ */
+function restapi_callback($route_name, $etid) {
+  $service = new RestService($route_name, $etid);
+
+  return $service->generateResponse();
+}
+
+/**
+ * Custom delivery callback to handle REST requests.
+ */
+function restapi_output($var) {
+  // We are returning JSON, so tell the browser.
+  drupal_add_http_header('Content-Type', 'application/json');
+
+  if (isset($var)) {
+    echo drupal_json_encode($var);
+  }
+}
