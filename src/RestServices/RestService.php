@@ -95,11 +95,15 @@ class RestService implements RestServiceInterface {
    *
    * @param array $options
    *   An array containing the supported request methods.
+   * @param string $route_id
+   *   The ID of the route.
+   * @param int $etid
+   *   Optional ID of a single entity to retrieve.
    */
-  public function __construct($route_id, $etid = array()) {
+  public function __construct($route_id, $etid) {
     $this->request = $_SERVER;
     $this->query = new \EntityFieldQuery();
-    $this->etids = $etid;
+    $this->etids = isset($etid) ? $etid : array();
 
     $config_discovery = new YamlConfigDiscovery();
 

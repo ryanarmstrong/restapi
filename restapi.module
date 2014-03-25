@@ -55,7 +55,7 @@ function restapi_menu() {
  * @return array
  *   A formatted response to the clients request.
  */
-function restapi_callback($route_name, $etid) {
+function restapi_callback($route_name, $etid = NULL) {
   $service = new RestService($route_name, $etid);
 
   return $service->generateResponse();
