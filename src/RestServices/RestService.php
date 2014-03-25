@@ -93,8 +93,6 @@ class RestService implements RestServiceInterface {
   /**
    * RestService contructor.
    *
-   * @param array $options
-   *   An array containing the supported request methods.
    * @param string $route_id
    *   The ID of the route.
    * @param int $etid
@@ -203,33 +201,41 @@ class RestService implements RestServiceInterface {
 
     // Run the query, load the entities, and format them.
     $results = $this->query->execute();
-    $this->etids = array_keys($results[$this->mapping['entity_type']]);
 
-    // Return an error response if no results were returned.
-    if (empty($this->etids)) {
-      return array(
-        'status' => 'no_results',
-        'message' => t('There are no entities that match the given conditions.'),
-      );
+    if (isset($results[$this->mapping['entity_type']])) {
+      $this->etids = array_keys($results[$this->mapping['entity_type']]);
+
+      // Format the entities returned.
+      return $this->formatEntities();
     }
 
-    // Format the entities returned.
-    return $this->formatEntities();
+    // Return an error response if no results were returned.
+    return array(
+      'status' => 'no_results',
+      'message' => t('There are no entities that match the given conditions.'),
+    );
   }
 
   /**
    * Sets the filters for the EntityFieldQuery.
    */
   protected function setRequirements() {
-    // Only return published entities.
-    $this->query->propertyCondition('status', 1);
+    // Set any defined entity property requirements.
+    foreach ($this->route['requirements']['properties'] as $property => $value) {
+      $this->query->propertyCondition($property, $value);
+    }
+
+    // Set any defined entity field requirements.
+    foreach ($this->route['requirements']['fields'] as $field => $value) {
+      $this->query->fieldCondition($field, $value);
+    }
   }
 
   /**
    * Sets the filters for the EntityFieldQuery.
    */
   protected function setFilters() {
-    // Load query string
+    // Load query string.
     $requested_filters = drupal_get_query_parameters();
 
     // Only procede if the client passed filters.
