@@ -13,9 +13,9 @@ use Symfony\Component\Yaml\Parser;
  */
 class YamlConfigDiscovery {
   public function parsedConfig($mask) {
-    $routing_files = $this->discover_routes($mask);
+    $routing_files = $this->discoverRoutes($mask);
     $yaml = new Parser();
-    foreach ($routing_files as $module_name => $routing_file) {
+    foreach ($routing_files as $routing_file) {
       $parsed_config = array_merge($yaml->parse(file_get_contents($routing_file)));
     }
 
@@ -27,8 +27,8 @@ class YamlConfigDiscovery {
    * @return array
    *   An array of routes.
    */
-  protected function discover_routes($mask) {
-    $dependencies = $this->get_dependent_modules();
+  protected function discoverRoutes($mask) {
+    $dependencies = $this->getDependentModules();
     $routing_files = array();
     foreach ($dependencies as $dependency) {
       $module_path = drupal_get_path('module', $dependency);
@@ -40,11 +40,12 @@ class YamlConfigDiscovery {
   }
 
   /**
-   * Get the active modules which are dependent on this module
+   * Get the active modules which are dependent on this module.
    *
-   * @return array an array of module names which depend on the parent module
+   * @return array
+   *   The module names which depend on the parent module.
    */
-  protected function get_dependent_modules() {
+  protected function getDependentModules() {
     $module_data = system_rebuild_module_data();
     $dependencies = array();
     foreach ($module_data as $module_name => $module) {
