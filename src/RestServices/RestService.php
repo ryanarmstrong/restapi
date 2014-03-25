@@ -189,8 +189,8 @@ class RestService implements RestServiceInterface {
       $this->query->entityCondition('bundle', $this->mapping['entity_bundle']);
     }
 
-    // Only return published entities.
-    $this->query->propertyCondition('status', 1);
+    // Set the requirements.
+    $this->setRequirements();
 
     // Set the filters.
     if (!empty($this->filters)) {
@@ -211,6 +211,14 @@ class RestService implements RestServiceInterface {
 
     // Format the entities returned.
     return $this->formatEntities();
+  }
+
+  /**
+   * Sets the filters for the EntityFieldQuery.
+   */
+  protected function setRequirements() {
+    // Only return published entities.
+    $this->query->propertyCondition('status', 1);
   }
 
   /**
