@@ -15,14 +15,16 @@ class FormatterField implements FormatterInterface {
    *
    * @param object $entity
    *   The entity to ge the property from.
+   * @param string $entity_type
+   *   The type of entity.
    * @param string $key
    *   The key value of the property to load.
    *
    * @return string
    *   Simply returns the value.
    */
-  public function format($entity, $key) {
-    $wrapper = entity_metadata_wrapper('node', $entity);
+  public function format($entity, $entity_type, $key) {
+    $wrapper = entity_metadata_wrapper($entity_type, $entity);
     $value = $wrapper->$key->value();
 
     return $value;

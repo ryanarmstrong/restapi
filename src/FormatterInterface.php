@@ -14,5 +14,5 @@ interface FormatterInterface {
    * @return string
    *   The formatted property or field.
    */
-  public function format($entity, $key);
+  public function format($entity, $entity_type, $key);
 }

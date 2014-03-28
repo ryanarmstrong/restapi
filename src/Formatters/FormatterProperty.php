@@ -15,13 +15,15 @@ class FormatterProperty implements FormatterInterface {
    *
    * @param object $entity
    *   The entity to ge the property from.
+   * @param string $entity_type
+   *   The type of entity.
    * @param string $key
    *   The key value of the property to load.
    *
    * @return string
    *   Simply returns the value.
    */
-  public function format($entity, $key) {
+  public function format($entity, $entity_type, $key) {
     return $entity->$key;
   }
 }

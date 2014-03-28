@@ -268,7 +268,7 @@ class RestService implements RestServiceInterface {
         foreach ($this->mapping['data'] as $field_name => $map) {
           $formatter = new $map['formatter']();
           // Call the appropriete formatter.
-          $formatted_entities[$etid][$map['label']] = $formatter->format($entity, $field_name);
+          $formatted_entities[$etid][$map['label']] = $formatter->format($entity, $this->mapping['entity_type'], $field_name);
         }
       }
       return $formatted_entities;
