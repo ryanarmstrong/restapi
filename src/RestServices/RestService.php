@@ -119,8 +119,8 @@ class RestService implements RestServiceInterface {
 
     // Load defined filters and save the ones to use for this route.
     $defined_filters = $config_discovery->parsedConfig('restapi.filters.yml');
-    foreach ($this->route['filters'] as $filter) {
-      $this->filters[$filter] = isset($defined_filters[$filter]) ? $defined_filters[$filter] : NULL;
+    if (isset($defined_filters[$this->route['filters']])) {
+      $this->filters = $defined_filters[$this->route['filters']];
     }
   }
 
