@@ -101,7 +101,7 @@ class RestService implements RestServiceInterface {
   public function __construct($route_id, $etid) {
     $this->request = $_SERVER;
     $this->query = new \EntityFieldQuery();
-    $this->etids = isset($etid) ? $etid : array();
+    $this->etids = isset($etid) ? array($etid) : array();
 
     $config_discovery = new YamlConfigDiscovery();
 
