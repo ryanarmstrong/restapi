@@ -33,9 +33,11 @@ function restapi_menu() {
       'delivery callback' => 'restapi_output',
       'access callback'   => TRUE,
     );
+    // Set custom callback if one is defined.
     if (isset($route['callback'])) {
       $items[$route['path']]['page callback'] = $route['callback'];
     }
+    // Set path wildcards if any are defined.
     if (isset($route['wildcards'])) {
       $items[$route['path']]['page arguments'] = array($route_name, $route['wildcards']);
     }
