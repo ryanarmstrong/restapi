@@ -16,10 +16,14 @@ class YamlConfigDiscovery {
     $routing_files = $this->discoverRoutes($mask);
     $yaml = new Parser();
     foreach ($routing_files as $routing_file) {
-      $parsed_config = array_merge($yaml->parse(file_get_contents($routing_file)));
+      $parsed_config = $yaml->parse(file_get_contents($routing_file));
+      // Flatten the array.
+      foreach ($parsed_config as $key => $value) {
+        $config[$key] = $value;
+      }
     }
 
-    return $parsed_config;
+    return $config;
   }
 
   /**
