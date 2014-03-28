@@ -9,7 +9,7 @@ namespace Drupal\restapi\Formatters;
 
 use Drupal\restapi\FormatterInterface;
 
-class FormatterTaxonomy extends FormatterField implements FormatterInterface {
+class FormatterTaxonomy implements FormatterInterface {
   /**
    * Formats an entity field that is a taxonomy reference.
    *
