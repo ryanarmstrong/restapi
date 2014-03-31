@@ -39,7 +39,11 @@ function restapi_menu() {
     }
     // Set path wildcards if any are defined.
     if (isset($route['wildcards'])) {
-      $items[$route['path']]['page arguments'] = array($route_name, $route['wildcards']);
+      $page_arguments = array($route_name);
+      foreach ($route['wildcards'] as $wildcard) {
+        $page_arguments[] = $wildcard;
+      }
+      $items[$route['path']]['page arguments'] = $page_arguments;
     }
   }
 
@@ -58,7 +62,8 @@ function restapi_menu() {
  *   A formatted response to the clients request.
  */
 function restapi_callback($route_name, $etid = NULL) {
-  $service = new RestService($route_name, $etid);
+  $variables = array('etid' => $etid);
+  $service = new RestService($route_name, $variables);
 
   return $service->generateResponse();
 }

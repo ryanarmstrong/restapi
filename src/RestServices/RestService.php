@@ -17,6 +17,16 @@ use Drupal\restapi\YamlConfigDiscovery;
  */
 class RestService implements RestServiceInterface {
   /**
+   * The request from the client application.
+   *
+   * Stores the $_SERVER superglobal for use throughout the generation of the
+   * response.
+   *
+   * @var array
+   */
+  protected $entity_identifier;
+
+  /**
    * The entity IDs of the requested resources.
    *
    * @var array
@@ -54,14 +64,14 @@ class RestService implements RestServiceInterface {
    *
    * @var array
    */
-  protected $options;
+  public $variables;
 
   /**
    * The EntityFieldQuery used to return the requested resources.
    *
    * @var EntityFieldQuery object
    */
-  protected $query;
+  public $query;
 
   /**
    * The entities requested by the client, formatted as a response.
@@ -98,10 +108,10 @@ class RestService implements RestServiceInterface {
    * @param int $etid
    *   Optional ID of a single entity to retrieve.
    */
-  public function __construct($route_id, $etid) {
+  public function __construct($route_id, $variables) {
     $this->request = $_SERVER;
-    $this->query = new \EntityFieldQuery();
-    $this->etids = isset($etid) ? array($etid) : array();
+    $this->variables = $variables;
+    $this->etids = isset($variables['etid']) ? array($variables['etid']) : array();
 
     $config_discovery = new YamlConfigDiscovery();
 
@@ -110,6 +120,14 @@ class RestService implements RestServiceInterface {
     if (isset($defined_routes[$route_id])) {
       $this->route = $defined_routes[$route_id];
     }
+
+    // Set the entity identifier
+    $entity_info = entity_get_info($this->route['requirements']['type']);
+    $this->entity_identifier = $entity_info['entity keys']['id'];
+
+    // Setup the query object.
+    $this->query = db_select($this->route['requirements']['type'], $this->route['requirements']['type']);
+    $this->query->fields($this->route['requirements']['type'], array($this->entity_identifier));
 
     // Store the mapping for this route.
     $defined_mappings = $config_discovery->parsedConfig('restapi.mappings.yml');
@@ -185,12 +203,6 @@ class RestService implements RestServiceInterface {
       return $this->formatEntities();
     }
 
-    // Set entity type and bundle.
-    $this->query->entityCondition('entity_type', $this->mapping['entity_type']);
-    if (isset($this->mapping['entity_bundle'])) {
-      $this->query->entityCondition('bundle', $this->mapping['entity_bundle']);
-    }
-
     // Set the requirements.
     $this->setRequirements();
 
@@ -201,11 +213,12 @@ class RestService implements RestServiceInterface {
 
     // Run the query, load the entities, and format them.
     $results = $this->query->execute();
+    $entity_identifier = $this->entity_identifier;
+    foreach ($results as $value) {
+      $this->etids[] = $value->$entity_identifier;
+    }
 
-    if (isset($results[$this->mapping['entity_type']])) {
-      $this->etids = array_keys($results[$this->mapping['entity_type']]);
-
-      // Format the entities returned.
+    if (!empty($this->etids)) {
       return $this->formatEntities();
     }
 
@@ -220,14 +233,17 @@ class RestService implements RestServiceInterface {
    * Sets the filters for the EntityFieldQuery.
    */
   protected function setRequirements() {
+    // Set the entity bundle.
+    $this->query->condition($this->route['requirements']['type'] . '.type', $this->route['requirements']['bundle']);
+
     // Set any defined entity property requirements.
     foreach ($this->route['requirements']['properties'] as $property => $value) {
-      $this->query->propertyCondition($property, $value);
+      $this->query->condition($this->route['requirements']['type'] . '.' . $property, $value);
     }
 
-    // Set any defined entity field requirements.
-    foreach ($this->route['requirements']['fields'] as $field => $value) {
-      $this->query->fieldCondition($field, $value);
+    // Call any custom callbacks.
+    if (isset($this->route['requirements']['custom_callback'])) {
+      call_user_func($this->route['requirements']['custom_callback'], array($this->variables, $this->query));
     }
   }
 
@@ -243,11 +259,12 @@ class RestService implements RestServiceInterface {
       foreach ($this->filters as $filter_name => $filter) {
         // Check if the filter is a entity property filter.
         if (isset($filter['property']) && isset($requested_filters[$filter_name])) {
-          $this->query->propertyCondition($filter['property'], $requested_filters[$filter_name]);
+          $this->query->condition($this->route['requirements']['type'] . '.' . $filter['property'], $requested_filters[$filter_name]);
         }
         // Check if the filter is a entity field filter.
         if (isset($filter['field']) && isset($requested_filters[$filter_name])) {
-          $this->query->fieldCondition($filter['field'], $requested_filters[$filter_name]);
+          $this->query->join('field_data_' . $filter['field'], $filter['field'], $filter['field'] . '.entity_id = ' . $this->route['requirements']['type'] . '.nid');
+          $this->query->condition($filter['field'] . '.' . $filter['value'], $requested_filters[$filter_name]);
         }
       }
     }
@@ -260,7 +277,7 @@ class RestService implements RestServiceInterface {
    */
   protected function formatEntities() {
     // Load the entities.
-    $unformatted_entities = entity_load($this->mapping['entity_type'], $this->etids);
+    $unformatted_entities = entity_load($this->route['requirements']['type'], $this->etids);
 
     // If a mapping for this entity and entity bundle has been provide, use it.
     if (isset($this->mapping['data'])) {
@@ -268,7 +285,7 @@ class RestService implements RestServiceInterface {
         foreach ($this->mapping['data'] as $field_name => $map) {
           $formatter = new $map['formatter']();
           // Call the appropriete formatter.
-          $formatted_entities[$etid][$map['label']] = $formatter->format($entity, $this->mapping['entity_type'], $field_name);
+          $formatted_entities[$etid][$map['label']] = $formatter->format($entity, $this->route['requirements']['type'], $field_name);
         }
       }
       return $formatted_entities;
