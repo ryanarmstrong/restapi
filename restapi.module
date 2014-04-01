@@ -10,13 +10,7 @@ xautoload()->registerModulePsr4(__FILE__, 'src');
 use Drupal\restapi\YamlConfigDiscovery;
 use Drupal\restapi\RestServices\RestService;
 
-/**
- * Implements hook_xautoload().
- */
-function restapi_xautoload($api) {
-  $composer_path = drupal_get_path('module', 'restapi') . '/vendor/composer';
-  $api->absolute()->composerDir($composer_path);
-}
+require_once __DIR__ . '/vendor/autoload.php';
 
 /**
  * Implements hook_menu().
