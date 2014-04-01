@@ -231,7 +231,7 @@ class RestService implements RestServiceInterface {
   }
 
   /**
-   * Sets the filters for the EntityFieldQuery.
+   * Sets the filters for the query.
    */
   protected function setRequirements() {
     // Set the entity bundle.
@@ -249,7 +249,7 @@ class RestService implements RestServiceInterface {
   }
 
   /**
-   * Sets the filters for the EntityFieldQuery.
+   * Sets the filters for the query.
    */
   protected function setFilters() {
     // Load query string.
