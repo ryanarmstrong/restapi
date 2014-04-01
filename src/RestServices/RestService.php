@@ -7,6 +7,7 @@
 namespace Drupal\restapi\RestServices;
 
 use Drupal\restapi\RestServiceInterface;
+use Drupal\restapi\Filters\FilterDefault;
 use Drupal\restapi\Formatters\FormatterProperty;
 use Drupal\restapi\Formatters\FormatterField;
 use Drupal\restapi\Formatters\FormatterTaxonomy;
@@ -256,15 +257,17 @@ class RestService implements RestServiceInterface {
 
     // Only procede if the client passed filters.
     if (!empty($requested_filters)) {
-      foreach ($this->filters as $filter_name => $filter) {
-        // Check if the filter is a entity property filter.
-        if (isset($filter['property']) && isset($requested_filters[$filter_name])) {
-          $this->query->condition($this->route['requirements']['type'] . '.' . $filter['property'], $requested_filters[$filter_name]);
-        }
-        // Check if the filter is a entity field filter.
-        if (isset($filter['field']) && isset($requested_filters[$filter_name])) {
-          $this->query->join('field_data_' . $filter['field'], $filter['field'], $filter['field'] . '.entity_id = ' . $this->route['requirements']['type'] . '.nid');
-          $this->query->condition($filter['field'] . '.' . $filter['value'], $requested_filters[$filter_name]);
+      // Loop through the passed query parameters.
+      foreach ($requested_filters as $filter_name => $value) {
+        // Check to make sure this is a supported filter.
+        if (array_key_exists($filter_name, $this->filters)) {
+          // Set the default filter. Can be overriden later.
+          $filter = new FilterDefault();
+          // Check for a defined filter to use
+          if (isset($filter_config['filter'])) {
+            $filter = new $filter_config['filter']();
+          }
+          $this->query = $filter->filterQuery($this->query, $this->filters[$filter_name], $value, $this->route['requirements']['type']);
         }
       }
     }
