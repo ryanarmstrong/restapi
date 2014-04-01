@@ -264,8 +264,8 @@ class RestService implements RestServiceInterface {
           // Set the default filter. Can be overriden later.
           $filter = new FilterDefault();
           // Check for a defined filter to use
-          if (isset($filter_config['filter'])) {
-            $filter = new $filter_config['filter']();
+          if (isset($this->filters[$filter_name]['filter'])) {
+            $filter = new $this->filters[$filter_name]['filter']();
           }
           $this->query = $filter->filterQuery($this->query, $this->filters[$filter_name], $value, $this->route['requirements']['type']);
         }
