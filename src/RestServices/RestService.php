@@ -283,9 +283,9 @@ class RestService implements RestServiceInterface {
     $unformatted_entities = entity_load($this->route['requirements']['type'], $this->etids);
 
     // If a mapping for this entity and entity bundle has been provide, use it.
-    if (isset($this->mapping['data'])) {
+    if (isset($this->mapping)) {
       foreach ($unformatted_entities as $etid => $entity) {
-        foreach ($this->mapping['data'] as $field_name => $map) {
+        foreach ($this->mapping as $field_name => $map) {
           $formatter = new $map['formatter']();
           // Call the appropriete formatter.
           $formatted_entities[$etid][$map['label']] = $formatter->format($entity, $this->route['requirements']['type'], $field_name);
