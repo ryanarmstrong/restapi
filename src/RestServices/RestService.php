@@ -11,6 +11,7 @@ use Drupal\restapi\Filters\FilterDefault;
 use Drupal\restapi\Formatters\FormatterProperty;
 use Drupal\restapi\Formatters\FormatterField;
 use Drupal\restapi\Formatters\FormatterTaxonomy;
+use Drupal\restapi\Sorters\SorterDefault;
 use Drupal\restapi\YamlConfigDiscovery;
 
 /**
@@ -35,14 +36,14 @@ class RestService implements RestServiceInterface {
   protected $etids;
 
   /**
-   * The entity IDs of the requested resources.
+   * The filters supported by the service.
    *
    * @var array
    */
   protected $filters = array();
 
   /**
-   * The entity IDs of the requested resources.
+   * The sorters mappers used by the service.
    *
    * @var array
    */
@@ -73,6 +74,23 @@ class RestService implements RestServiceInterface {
    * @var EntityFieldQuery object
    */
   public $query;
+
+  /**
+   * The request from the client application.
+   *
+   * Stores the $_SERVER superglobal for use throughout the generation of the
+   * response.
+   *
+   * @var array
+   */
+  protected $query_parameters;
+
+  /**
+   * The sorters supported by the service.
+   *
+   * @var array
+   */
+  protected $sorters;
 
   /**
    * The entities requested by the client, formatted as a response.
@@ -106,13 +124,16 @@ class RestService implements RestServiceInterface {
    *
    * @param string $route_id
    *   The ID of the route.
-   * @param int $etid
-   *   Optional ID of a single entity to retrieve.
+   * @param array $variables
+   *   The variables available to the RestService.
    */
   public function __construct($route_id, $variables) {
     $this->request = $_SERVER;
     $this->variables = $variables;
     $this->etids = isset($variables['etid']) ? array($variables['etid']) : array();
+
+    // Load query string.
+    $this->query_parameters = drupal_get_query_parameters();
 
     $config_discovery = new YamlConfigDiscovery();
 
@@ -122,7 +143,7 @@ class RestService implements RestServiceInterface {
       $this->route = $defined_routes[$route_id];
     }
 
-    // Set the entity identifier
+    // Set the entity identifier.
     $entity_info = entity_get_info($this->route['requirements']['type']);
     $this->entity_identifier = $entity_info['entity keys']['id'];
 
@@ -140,6 +161,12 @@ class RestService implements RestServiceInterface {
     $defined_filters = $config_discovery->parsedConfig('restapi.filters.yml');
     if (isset($defined_filters[$this->route['filters']])) {
       $this->filters = $defined_filters[$this->route['filters']];
+    }
+
+    // Store the sorters for this route.
+    $defined_sorters = $config_discovery->parsedConfig('restapi.sorters.yml');
+    if (isset($defined_sorters[$this->route['sorters']])) {
+      $this->sorters = $defined_sorters[$this->route['sorters']];
     }
   }
 
@@ -208,9 +235,10 @@ class RestService implements RestServiceInterface {
     $this->setRequirements();
 
     // Set the filters.
-    if (!empty($this->filters)) {
-      $this->setFilters();
-    }
+    $this->setFilters();
+
+    // Set the filters.
+    $this->setSorters();
 
     // Run the query, load the entities, and format them.
     $results = $this->query->execute();
@@ -252,24 +280,77 @@ class RestService implements RestServiceInterface {
    * Sets the filters for the query.
    */
   protected function setFilters() {
-    // Load query string.
-    $requested_filters = drupal_get_query_parameters();
-
     // Only procede if the client passed filters.
-    if (!empty($requested_filters)) {
+    if (!empty($this->query_parameters)) {
       // Loop through the passed query parameters.
-      foreach ($requested_filters as $filter_name => $value) {
+      foreach ($this->query_parameters as $filter_name => $value) {
         // Check to make sure this is a supported filter.
         if (array_key_exists($filter_name, $this->filters)) {
           // Set the default filter. Can be overriden later.
           $filter = new FilterDefault();
-          // Check for a defined filter to use
+          // Check for a defined filter to use.
           if (isset($this->filters[$filter_name]['filter'])) {
             $filter = new $this->filters[$filter_name]['filter']();
           }
           $this->query = $filter->filterQuery($this->query, $this->filters[$filter_name], $value, $this->route['requirements']['type']);
         }
       }
+    }
+  }
+
+  /**
+   * Sets the sorters for the query.
+   */
+  protected function setSorters() {
+    // Set default ordering and sorting.
+    $orderby = $this->route['requirements']['type'] . '.' . $this->entity_identifier;
+    if (isset($this->sorters[$this->route['defaults']['orderby']])) {
+      // If string is given, then use it as a column on the base entity table.
+      $this->query->join($this->sorters[$this->route['defaults']['orderby']]['table'], 'sort', 'sort.entity_id = ' . $this->route['requirements']['type'] . '.' . $this->entity_identifier);
+      $orderby = 'sort.' . $this->sorters[$this->route['defaults']['orderby']]['column'];
+    }
+    $sort = isset($this->sorters[$this->route['defaults']['orderby']]['sort']) ? $this->sorters[$this->route['defaults']['orderby']]['sort'] : 'ASC';
+
+    // Set defaut limits
+    $limit = isset($this->route['defaults']['limit']) ? $this->route['defaults']['limit'] : NULL;
+
+    // Only procede if the client passed filters.
+    if (!empty($this->query_parameters)) {
+      // Loop through the passed query parameters.
+      foreach ($this->query_parameters as $sorter_name => $value) {
+        // Check to make sure this is a supported filter.
+          switch ($sorter_name) {
+            case 'orderBy':
+              if (array_key_exists($value, $this->sorters)) {
+                // Join the needed table and set the orderBy variable
+                $this->query->join($this->sorters[$value]['table'], $this->sorters[$value]['table'], $this->sorters[$value]['table'] . '.entity_id = ' . $this->route['requirements']['type'] . '.' . $this->entity_identifier);
+                $orderby = $this->sorters[$value]['table'] . '.' . $this->sorters[$value]['column'];
+              }
+              break;
+
+            case 'sort':
+              $sort = $value;
+              break;
+
+            case 'limit':
+              // Make sure an int was passed, otheriwse keep the current value.
+              $limit = $value;
+              break;
+          }
+      }
+    }
+
+    // If another table is needed, join and use that.
+    if (isset($this->route['defaults']['orderby']['table']) && isset($this->route['defaults']['orderby']['column'])) {
+      $this->query->join($this->route['defaults']['orderby']['table'], 'sort', 'sort' . '.entity_id = ' . $this->route['requirements']['type'] . '.nid');
+    }
+
+    // Now add the orderBy commands.
+    $this->query->orderBy($orderby, $sort);
+
+    // Set the sorting if a limit has been provided.
+    if ($limit) {
+      $this->query->range(0, $limit);
     }
   }
 
