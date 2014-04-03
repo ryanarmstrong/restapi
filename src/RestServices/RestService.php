@@ -153,8 +153,17 @@ class RestService implements RestServiceInterface {
 
     // Store the mapping for this route.
     $defined_mappings = $config_discovery->parsedConfig('restapi.mappings.yml');
-    if (isset($defined_mappings[$this->route['mapping']])) {
-      $this->mapping = $defined_mappings[$this->route['mapping']];
+    // Load the default mapper defined by the route.
+    if (isset($defined_mappings[$this->route['defaults']['mapping']])) {
+      $this->mapping = $defined_mappings[$this->route['defaults']['mapping']];
+    }
+    // Override the route default with a mapper provided by the caller.
+    if (isset($this->variables['mapping'])) {
+      $this->mapping = $defined_mappings[$this->variables['mapping']];
+    }
+    // Override the caller mapper with a mapper provided by the client request.
+    if (isset($this->query_parameters['mapping'])) {
+      $this->mapping = $defined_mappings[$this->query_parameters['mapping']];
     }
 
     // Load defined filters and save the ones to use for this route.
