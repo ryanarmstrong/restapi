@@ -168,14 +168,14 @@ class RestService implements RestServiceInterface {
 
     // Load defined filters and save the ones to use for this route.
     $defined_filters = $config_discovery->parsedConfig('restapi.filters.yml');
-    if (isset($defined_filters[$this->route['filters']])) {
-      $this->filters = $defined_filters[$this->route['filters']];
+    if (isset($defined_filters[$this->route['defaults']['filters']])) {
+      $this->filters = $defined_filters[$this->route['defaults']['filters']];
     }
 
     // Store the sorters for this route.
     $defined_sorters = $config_discovery->parsedConfig('restapi.sorters.yml');
-    if (isset($defined_sorters[$this->route['sorters']])) {
-      $this->sorters = $defined_sorters[$this->route['sorters']];
+    if (isset($defined_sorters[$this->route['defaults']['sorters']])) {
+      $this->sorters = $defined_sorters[$this->route['defaults']['sorters']];
     }
   }
 
@@ -329,7 +329,7 @@ class RestService implements RestServiceInterface {
       foreach ($this->query_parameters as $sorter_name => $value) {
         // Check to make sure this is a supported filter.
           switch ($sorter_name) {
-            case 'orderBy':
+            case 'orderby':
               if (array_key_exists($value, $this->sorters)) {
                 // Join the needed table and set the orderBy variable
                 $this->query->join($this->sorters[$value]['table'], $this->sorters[$value]['table'], $this->sorters[$value]['table'] . '.entity_id = ' . $this->route['requirements']['type'] . '.' . $this->entity_identifier);
