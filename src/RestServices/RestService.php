@@ -314,7 +314,6 @@ class RestService implements RestServiceInterface {
     // Set default ordering and sorting.
     $orderby = $this->route['requirements']['type'] . '.' . $this->entity_identifier;
     if (isset($this->sorters[$this->route['defaults']['orderby']])) {
-      // If string is given, then use it as a column on the base entity table.
       $this->query->join($this->sorters[$this->route['defaults']['orderby']]['table'], 'sort', 'sort.entity_id = ' . $this->route['requirements']['type'] . '.' . $this->entity_identifier);
       $orderby = 'sort.' . $this->sorters[$this->route['defaults']['orderby']]['column'];
     }
