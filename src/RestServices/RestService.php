@@ -10,8 +10,6 @@ use Drupal\restapi\RestServiceInterface;
 use Drupal\restapi\Filters\FilterDefault;
 use Drupal\restapi\Formatters\FormatterProperty;
 use Drupal\restapi\Formatters\FormatterField;
-use Drupal\restapi\Formatters\FormatterTaxonomy;
-use Drupal\restapi\Sorters\SorterDefault;
 use Drupal\restapi\YamlConfigDiscovery;
 
 /**
