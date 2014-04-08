@@ -309,50 +309,30 @@ class RestService implements RestServiceInterface {
    * Sets the sorters for the query.
    */
   protected function setSorters() {
-    // Set default ordering and sorting.
-    $orderby = $this->route['requirements']['type'] . '.' . $this->entity_identifier;
-    if (isset($this->sorters[$this->route['defaults']['orderby']])) {
-      $this->query->join($this->sorters[$this->route['defaults']['orderby']]['table'], 'sort', 'sort.entity_id = ' . $this->route['requirements']['type'] . '.' . $this->entity_identifier);
-      $orderby = 'sort.' . $this->sorters[$this->route['defaults']['orderby']]['column'];
-    }
-    $sort = isset($this->sorters[$this->route['defaults']['orderby']]['sort']) ? $this->sorters[$this->route['defaults']['orderby']]['sort'] : 'ASC';
-
-    // Set defaut limits
-    $limit = isset($this->route['defaults']['limit']) ? $this->route['defaults']['limit'] : NULL;
-
-    // Only procede if the client passed filters.
-    if (!empty($this->query_parameters)) {
-      // Loop through the passed query parameters.
-      foreach ($this->query_parameters as $sorter_name => $value) {
-        // Check to make sure this is a supported filter.
-          switch ($sorter_name) {
-            case 'orderby':
-              if (array_key_exists($value, $this->sorters)) {
-                // Join the needed table and set the orderBy variable
-                $this->query->join($this->sorters[$value]['table'], $this->sorters[$value]['table'], $this->sorters[$value]['table'] . '.entity_id = ' . $this->route['requirements']['type'] . '.' . $this->entity_identifier);
-                $orderby = $this->sorters[$value]['table'] . '.' . $this->sorters[$value]['column'];
-              }
-              break;
-
-            case 'sort':
-              $sort = $value;
-              break;
-
-            case 'limit':
-              // Make sure an int was passed, otheriwse keep the current value.
-              $limit = $value;
-              break;
-          }
+    // Set the orderby.
+    $router_sorter = isset($this->sorters[$this->query_parameters['orderby']]) ? $this->sorters[$this->query_parameters['orderby']] : $this->sorters[$this->route['defaults']['orderby']];
+    if (isset($router_sorter)) {
+      // If a property sorter is given, set the orderby.
+      if (isset($router_sorter['property']) && isset($router_sorter['sort'])) {
+        $orderby = $router_sorter['property'];
       }
-    }
+      // If a table is given, set the orderby and define the table/value to use.
+      if (isset($router_sorter['table']) && isset($router_sorter['column']) && isset($router_sorter['sort'])) {
+        // Join the needed table and set the orderby.
+        $this->query->join($router_sorter['table'], $router_sorter['table'], $router_sorter['table'] . '.entity_id = ' . $this->route['requirements']['type'] . '.' . $this->entity_identifier);
+        $orderby = $router_sorter['table'] . '.' . $router_sorter['column'];
+      }
+      // Set the sort.
+      $sort = isset($this->query_parameters['sort']) ? $this->query_parameters['sort'] : $router_sorter['sort'];
 
-    // If another table is needed, join and use that.
-    if (isset($this->route['defaults']['orderby']['table']) && isset($this->route['defaults']['orderby']['column'])) {
-      $this->query->join($this->route['defaults']['orderby']['table'], 'sort', 'sort' . '.entity_id = ' . $this->route['requirements']['type'] . '.nid');
+      // Set the limit.
+      $limit = isset($this->query_parameters['limit']) ? $this->query_parameters['limit'] : $router_sorter['limit'];
     }
 
     // Now add the orderBy commands.
-    $this->query->orderBy($orderby, $sort);
+    if ($orderby && $sort) {
+      $this->query->orderBy($orderby, $sort);
+    }
 
     // Set the sorting if a limit has been provided.
     if ($limit) {
