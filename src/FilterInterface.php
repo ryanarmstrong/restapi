@@ -14,5 +14,13 @@ interface FilterInterface {
    * @return object
    *   The modified query object.
    */
-  public function filterQuery($query, $filter, $value, $type);
+  public function filterQuery($query, $filter, $values, $type);
+
+  /**
+   * Filter the entity IDs after the query has been run.
+   *
+   * @return object
+   *   The modified entity ID list.
+   */
+  public function filterPostQuery($etids, $filter);
 }

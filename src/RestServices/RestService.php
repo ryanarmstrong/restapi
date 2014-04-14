@@ -48,23 +48,12 @@ class RestService implements RestServiceInterface {
   protected $mappings;
 
   /**
-   * An array of options passed to the Service.
-   *
-   * - supported_requests
-   *     The types of request methods that this service can support. Available
-   *     options are GET, POST, PUT, DELETE, PATCH
-   * - supported_formats
-   *     The different formats that are supported, such as application/json.
-   * - entity_type
-   *     The type of entity that the service is requesting such as node, user,
-   *     or taxonomy.
-   * - entity_bundle
-   *     The bundle type that the service is requesting. The node/content type
-   *     or the vocabulary are common uses.
+   * Filters with NOT conditions on a field with multiple values must be handled
+   * seperately. This contains any that need to be run.
    *
    * @var array
    */
-  public $variables;
+  protected $postQueryFilters = array();
 
   /**
    * The EntityFieldQuery used to return the requested resources.
@@ -82,13 +71,6 @@ class RestService implements RestServiceInterface {
    * @var array
    */
   protected $query_parameters;
-
-  /**
-   * The sorters supported by the service.
-   *
-   * @var array
-   */
-  protected $sorters;
 
   /**
    * The entities requested by the client, formatted as a response.
@@ -116,6 +98,32 @@ class RestService implements RestServiceInterface {
    * @var array
    */
   protected $route;
+
+  /**
+   * The sorters supported by the service.
+   *
+   * @var array
+   */
+  protected $sorters;
+
+  /**
+   * An array of options passed to the Service.
+   *
+   * - supported_requests
+   *     The types of request methods that this service can support. Available
+   *     options are GET, POST, PUT, DELETE, PATCH
+   * - supported_formats
+   *     The different formats that are supported, such as application/json.
+   * - entity_type
+   *     The type of entity that the service is requesting such as node, user,
+   *     or taxonomy.
+   * - entity_bundle
+   *     The bundle type that the service is requesting. The node/content type
+   *     or the vocabulary are common uses.
+   *
+   * @var array
+   */
+  public $variables;
 
   /**
    * RestService contructor.
@@ -241,8 +249,8 @@ class RestService implements RestServiceInterface {
     // Set the requirements.
     $this->setRequirements();
 
-    // Set the filters.
-    $this->setFilters();
+    // Run the query filters.
+    $this->setQueryFilters();
 
     // Set the filters.
     $this->setSorters();
@@ -251,7 +259,12 @@ class RestService implements RestServiceInterface {
     $results = $this->query->execute();
     $entity_identifier = $this->entity_identifier;
     foreach ($results as $value) {
-      $this->etids[] = $value->$entity_identifier;
+      $this->etids[$value->$entity_identifier] = $value->$entity_identifier;
+    }
+
+    // Run the post-query filters.
+    if (!empty($this->postQueryFilters)) {
+      $this->setPostQueryFilters();
     }
 
     if (!empty($this->etids)) {
@@ -286,22 +299,47 @@ class RestService implements RestServiceInterface {
   /**
    * Sets the filters for the query.
    */
-  protected function setFilters() {
+  protected function setQueryFilters() {
     // Only procede if the client passed filters.
     if (!empty($this->query_parameters)) {
       // Loop through the passed query parameters.
-      foreach ($this->query_parameters as $filter_name => $value) {
-        // Check to make sure this is a supported filter.
-        if (array_key_exists($filter_name, $this->filters)) {
+      foreach ($this->query_parameters as $filter_name => $values) {
+        // Check to make sure this is a supported filter and it isn't empty.
+        if (array_key_exists($filter_name, $this->filters) && !empty($values)) {
           // Set the default filter. Can be overriden later.
           $filter = new FilterDefault();
           // Check for a defined filter to use.
           if (isset($this->filters[$filter_name]['filter'])) {
             $filter = new $this->filters[$filter_name]['filter']();
           }
-          $this->query = $filter->filterQuery($this->query, $this->filters[$filter_name], $value, $this->route['requirements']['type']);
+          $filter_results = $filter->filterQuery($this->query, $this->filters[$filter_name], $values, $this->route['requirements']['type']);
+
+          // Set the query to the modified version if returned.
+          if (isset($filter_results['query'])) {
+            $this->query = $filter_results['query'];
+          }
+
+          // Set the postQueryFilters if that was returned instead of a moded query.
+          if (isset($filter_results['post_query_filters'])) {
+            $this->postQueryFilters[] = $filter_results['post_query_filters'];
+          }
         }
       }
+    }
+  }
+
+  /**
+   * Sets any NOT operator filters on fields with multiple values passed along.
+   */
+  protected function setPostQueryFilters() {
+    foreach ($this->postQueryFilters as $postQueryFilters) {
+      // Set the default filter. Can be overriden later.
+      $filter = new FilterDefault();
+      // Check for a defined filter to use.
+      if (isset($postQueryFilters['filter'])) {
+        $filter = new $postQueryFilters['filter']();
+      }
+      $this->etids = $filter->filterPostQuery($this->etids, $postQueryFilters);
     }
   }
 
