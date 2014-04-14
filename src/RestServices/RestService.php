@@ -319,7 +319,7 @@ class RestService implements RestServiceInterface {
             $this->query = $filter_results['query'];
           }
 
-          // Set the postQueryFilters if that was returned instead of a moded query.
+          // Set any postQueryFilters returned instead of a moded query.
           if (isset($filter_results['post_query_filters'])) {
             $this->postQueryFilters[] = $filter_results['post_query_filters'];
           }
