@@ -372,9 +372,10 @@ class RestService implements RestServiceInterface {
       $this->query->orderBy($orderby, $sort);
     }
 
+    $start = isset($this->query_parameters['start']) ? $this->query_parameters['start'] : 0;
     // Set the sorting if a limit has been provided.
     if ($limit) {
-      $this->query->range(0, $limit);
+      $this->query->range($start, $limit);
     }
   }
 
