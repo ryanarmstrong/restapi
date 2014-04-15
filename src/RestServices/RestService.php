@@ -249,11 +249,14 @@ class RestService implements RestServiceInterface {
     // Set the requirements.
     $this->setRequirements();
 
-    // Run the query filters.
-    $this->setQueryFilters();
+    // Only procede if the client passed filters.
+    if (!empty($this->query_parameters)) {
+      // Run the query filters.
+      $this->setQueryFilters();
 
-    // Set the filters.
-    $this->setSorters();
+      // Set the filters.
+      $this->setSorters();
+    }
 
     // Run the query, load the entities, and format them.
     $results = $this->query->execute();
@@ -300,29 +303,26 @@ class RestService implements RestServiceInterface {
    * Sets the filters for the query.
    */
   protected function setQueryFilters() {
-    // Only procede if the client passed filters.
-    if (!empty($this->query_parameters)) {
-      // Loop through the passed query parameters.
-      foreach ($this->query_parameters as $filter_name => $values) {
-        // Check to make sure this is a supported filter and it isn't empty.
-        if (array_key_exists($filter_name, $this->filters) && !empty($values)) {
-          // Set the default filter. Can be overriden later.
-          $filter = new FilterDefault();
-          // Check for a defined filter to use.
-          if (isset($this->filters[$filter_name]['filter'])) {
-            $filter = new $this->filters[$filter_name]['filter']();
-          }
-          $filter_results = $filter->filterQuery($this->query, $this->filters[$filter_name], $values, $this->route['requirements']['type']);
+    // Loop through the passed query parameters.
+    foreach ($this->query_parameters as $filter_name => $values) {
+      // Check to make sure this is a supported filter and it isn't empty.
+      if (array_key_exists($filter_name, $this->filters) && !empty($values)) {
+        // Set the default filter. Can be overriden later.
+        $filter = new FilterDefault();
+        // Check for a defined filter to use.
+        if (isset($this->filters[$filter_name]['filter'])) {
+          $filter = new $this->filters[$filter_name]['filter']();
+        }
+        $filter_results = $filter->filterQuery($this->query, $this->filters[$filter_name], $values, $this->route['requirements']['type']);
 
-          // Set the query to the modified version if returned.
-          if (isset($filter_results['query'])) {
-            $this->query = $filter_results['query'];
-          }
+        // Set the query to the modified version if returned.
+        if (isset($filter_results['query'])) {
+          $this->query = $filter_results['query'];
+        }
 
-          // Set any postQueryFilters returned instead of a moded query.
-          if (isset($filter_results['post_query_filters'])) {
-            $this->postQueryFilters[] = $filter_results['post_query_filters'];
-          }
+        // Set any postQueryFilters returned instead of a moded query.
+        if (isset($filter_results['post_query_filters'])) {
+          $this->postQueryFilters[] = $filter_results['post_query_filters'];
         }
       }
     }
