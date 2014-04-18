@@ -161,15 +161,15 @@ class RestService implements RestServiceInterface {
     $defined_mappings = $config_discovery->parsedConfig('restapi.mappings.yml');
     // Load the default mapper defined by the route.
     if (isset($defined_mappings[$this->route['defaults']['mapping']])) {
-      $this->mapping = $defined_mappings[$this->route['defaults']['mapping']];
+      $this->mappings = $defined_mappings[$this->route['defaults']['mapping']];
     }
     // Override the route default with a mapper provided by the caller.
     if (isset($this->variables['mapping'])) {
-      $this->mapping = $defined_mappings[$this->variables['mapping']];
+      $this->mappings = $defined_mappings[$this->variables['mapping']];
     }
     // Override the caller mapper with a mapper provided by the client request.
     if (isset($this->query_parameters['mapping'])) {
-      $this->mapping = $defined_mappings[$this->query_parameters['mapping']];
+      $this->mappings = $defined_mappings[$this->query_parameters['mapping']];
     }
 
     // Load defined filters and save the ones to use for this route.
@@ -368,13 +368,13 @@ class RestService implements RestServiceInterface {
     }
 
     // Now add the orderBy commands.
-    if ($orderby && $sort) {
+    if (isset($orderby) && isset($sort)) {
       $this->query->orderBy($orderby, $sort);
     }
 
     $start = isset($this->query_parameters['start']) ? $this->query_parameters['start'] : 0;
     // Set the sorting if a limit has been provided.
-    if ($limit) {
+    if (isset($limit)) {
       $this->query->range($start, $limit);
     }
   }
@@ -387,11 +387,12 @@ class RestService implements RestServiceInterface {
   protected function formatEntities() {
     // Load the entities.
     $unformatted_entities = entity_load($this->route['requirements']['type'], $this->etids);
+    $formatted_entities = array();
 
     // If a mapping for this entity and entity bundle has been provide, use it.
-    if (isset($this->mapping)) {
+    if (isset($this->mappings)) {
       foreach ($unformatted_entities as $etid => $entity) {
-        foreach ($this->mapping as $field_name => $map) {
+        foreach ($this->mappings as $field_name => $map) {
           $formatter = new $map['formatter']();
           // Call the appropriete formatter.
           $formatted_entities[$etid][$map['label']] = $formatter->format($entity, $this->route['requirements']['type'], $field_name);
