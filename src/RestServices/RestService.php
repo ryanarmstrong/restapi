@@ -388,6 +388,7 @@ class RestService implements RestServiceInterface {
   protected function formatEntities() {
     // Load the entities.
     $unformatted_entities = entity_load($this->route['requirements']['type'], $this->etids);
+    $formatted_entities = array();
 
     if (!empty($unformatted_entities)) {
       // If a mapping for this entity and entity bundle has been provide, use it.
