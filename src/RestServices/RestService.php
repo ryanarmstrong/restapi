@@ -275,6 +275,7 @@ class RestService implements RestServiceInterface {
     }
 
     // Return an error response if no results were returned.
+    http_response_code(204);
     return array(
       'status' => 'no_results',
       'message' => t('There are no entities that match the given conditions.'),
@@ -387,21 +388,29 @@ class RestService implements RestServiceInterface {
   protected function formatEntities() {
     // Load the entities.
     $unformatted_entities = entity_load($this->route['requirements']['type'], $this->etids);
-    $formatted_entities = array();
 
-    // If a mapping for this entity and entity bundle has been provide, use it.
-    if (isset($this->mappings)) {
-      foreach ($unformatted_entities as $etid => $entity) {
-        foreach ($this->mappings as $field_name => $map) {
-          $formatter = new $map['formatter']();
-          // Call the appropriete formatter.
-          $formatted_entities[$etid][$map['label']] = $formatter->format($entity, $this->route['requirements']['type'], $field_name);
+    if (!empty($unformatted_entities)) {
+      // If a mapping for this entity and entity bundle has been provide, use it.
+      if (isset($this->mappings)) {
+        foreach ($unformatted_entities as $etid => $entity) {
+          foreach ($this->mappings as $field_name => $map) {
+            $formatter = new $map['formatter']();
+            // Call the appropriete formatter.
+            $formatted_entities[$etid][$map['label']] = $formatter->format($entity, $this->route['requirements']['type'], $field_name);
+          }
         }
+        return $formatted_entities;
       }
-      return $formatted_entities;
+
+      // Otherwise just return the unformatted entities.
+      return $unformatted_entities;
     }
 
-    // Otherwise just return the unformatted entities.
-    return $unformatted_entities;
+    // Return an error response if no results were returned.
+    http_response_code(204);
+    return array(
+      'status' => 'no_results',
+      'message' => t('There are no entities that match the given conditions.'),
+    );
   }
 }
