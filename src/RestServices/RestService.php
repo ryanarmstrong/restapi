@@ -348,7 +348,7 @@ class RestService implements RestServiceInterface {
    * Sets the sorters for the query.
    */
   protected function setSorters() {
-    // Set the orderby.
+    // Set the sorter.
     $router_sorter = isset($this->sorters[$this->query_parameters['orderby']]) ? $this->sorters[$this->query_parameters['orderby']] : $this->sorters[$this->route['defaults']['orderby']];
     if (isset($router_sorter)) {
       // If a property sorter is given, set the orderby.
@@ -363,10 +363,10 @@ class RestService implements RestServiceInterface {
       }
       // Set the sort.
       $sort = isset($this->query_parameters['sort']) ? $this->query_parameters['sort'] : $router_sorter['sort'];
-
-      // Set the limit.
-      $limit = isset($this->query_parameters['limit']) ? $this->query_parameters['limit'] : $router_sorter['limit'];
     }
+
+    // Set the limit.
+    $limit = isset($this->query_parameters['limit']) ? $this->query_parameters['limit'] : $this->route['defaults']['limit'];
 
     // Now add the orderBy commands.
     if (isset($orderby) && isset($sort)) {
