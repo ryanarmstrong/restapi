@@ -253,10 +253,10 @@ class RestService implements RestServiceInterface {
     if (!empty($this->query_parameters)) {
       // Run the query filters.
       $this->setQueryFilters();
-
-      // Set the filters.
-      $this->setSorters();
     }
+
+    // Set the filters.
+    $this->setSorters();
 
     // Run the query, load the entities, and format them.
     $results = $this->query->execute();
