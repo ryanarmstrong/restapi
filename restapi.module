@@ -66,10 +66,7 @@ function restapi_callback($route_name, $etid = NULL) {
  * Custom delivery callback to handle REST requests.
  */
 function restapi_output($var) {
-  // We are returning JSON, so tell the browser.
-  drupal_add_http_header('Content-Type', 'application/json');
-
   if (isset($var)) {
-    echo drupal_json_encode($var);
+    return drupal_json_output($var);
   }
 }

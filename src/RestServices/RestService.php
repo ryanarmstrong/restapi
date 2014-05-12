@@ -391,7 +391,7 @@ class RestService implements RestServiceInterface {
     $formatted_entities = array();
 
     if (!empty($unformatted_entities)) {
-      // If a mapping for this entity and entity bundle has been provide, use it.
+      // Use the provided mapping.
       if (isset($this->mappings)) {
         foreach ($unformatted_entities as $etid => $entity) {
           foreach ($this->mappings as $field_name => $map) {
@@ -400,11 +400,11 @@ class RestService implements RestServiceInterface {
             $formatted_entities[$etid][$map['label']] = $formatter->format($entity, $this->route['requirements']['type'], $field_name);
           }
         }
-        return $formatted_entities;
+        return array_values($formatted_entities);
       }
 
       // Otherwise just return the unformatted entities.
-      return $unformatted_entities;
+      return array_values($unformatted_entities);
     }
 
     // Return an error response if no results were returned.
