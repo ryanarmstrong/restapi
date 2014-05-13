@@ -389,28 +389,19 @@ class RestService implements RestServiceInterface {
     $unformatted_entities = entity_load($this->route['requirements']['type'], $this->etids);
     $formatted_entities = array();
 
-    if (!empty($unformatted_entities)) {
-      // Use the provided mapping.
-      if (isset($this->mappings)) {
-        foreach ($unformatted_entities as $etid => $entity) {
-          foreach ($this->mappings as $field_name => $map) {
-            $formatter = new $map['formatter']();
-            // Call the appropriete formatter.
-            $formatted_entities[$etid][$map['label']] = $formatter->format($entity, $this->route['requirements']['type'], $field_name);
-          }
+    // Use the provided mapping.
+    if (isset($this->mappings)) {
+      foreach ($unformatted_entities as $etid => $entity) {
+        foreach ($this->mappings as $field_name => $map) {
+          $formatter = new $map['formatter']();
+          // Call the appropriete formatter.
+          $formatted_entities[$etid][$map['label']] = $formatter->format($entity, $this->route['requirements']['type'], $field_name);
         }
-        return array_values($formatted_entities);
       }
-
-      // Otherwise just return the unformatted entities.
-      return array_values($unformatted_entities);
+      return array_values($formatted_entities);
     }
 
-    // Return an error response if no results were returned.
-    http_response_code(204);
-    return array(
-      'status' => 'no_results',
-      'message' => t('There are no entities that match the given conditions.'),
-    );
+    // Otherwise just return the unformatted entities.
+    return array_values($unformatted_entities);
   }
 }
