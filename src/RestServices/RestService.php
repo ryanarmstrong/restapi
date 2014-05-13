@@ -275,7 +275,6 @@ class RestService implements RestServiceInterface {
     }
 
     // Return an error response if no results were returned.
-    http_response_code(204);
     return array(
       'status' => 'no_results',
       'message' => t('There are no entities that match the given conditions.'),
