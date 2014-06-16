@@ -9,7 +9,7 @@ namespace Drupal\restapi;
 use Symfony\Component\Yaml\Parser;
 
 /**
- * Provides a base RESTful service class.
+ * Provides a YAML file discovery service.
  */
 class YamlConfigDiscovery {
   public function parsedConfig($mask) {
