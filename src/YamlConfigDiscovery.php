@@ -13,7 +13,7 @@ use Symfony\Component\Yaml\Parser;
  */
 class YamlConfigDiscovery {
   public function parsedConfig($mask) {
-    $routing_files = $this->discoverRoutes($mask);
+    $routing_files = $this->discoverRoutes($mask . '.yml');
     $yaml = new Parser();
     foreach ($routing_files as $routing_file) {
       $parsed_config = $yaml->parse(file_get_contents($routing_file));
