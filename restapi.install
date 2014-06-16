@@ -1,0 +1,15 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the restapi module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function restapi_schema() {
+  $schema['cache_restapi'] = drupal_get_schema_unprocessed('system', 'cache');
+  $schema['cache_restapi']['description'] = 'Cache table for restapi routing information.';
+  return $schema;
+}

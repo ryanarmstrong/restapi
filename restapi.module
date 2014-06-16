@@ -17,10 +17,12 @@ require_once __DIR__ . '/vendor/autoload.php';
  */
 function restapi_menu() {
   $config_discovery = new YamlConfigDiscovery();
-  $routes = $config_discovery->parsedConfig('restapi.routing.yml');
+  $routes = $config_discovery->parsedConfig('restapi.routes');
+  cache_clear_all('routes:', 'cache_restapi', TRUE);
 
   $items = array();
   foreach ($routes as $route_name => $route) {
+    cache_set("routes:$route_name", $route, 'cache_restapi');
     $items[$route['path']] = array(
       'page callback' => 'restapi_callback',
       'page arguments' => array($route_name),
@@ -69,4 +71,17 @@ function restapi_output($var) {
   if (isset($var)) {
     return drupal_json_output($var);
   }
+}
+
+function restapi_service_config($type, $id, $reset = FALSE) {
+  $cache = cache_get("$type:$id", 'cache_restapi');
+  if (!$cache || $reset) {
+    $config_discovery = new YamlConfigDiscovery();
+    $yaml = $config_discovery->parsedConfig('restapi.' . $type);
+    $data = $yaml[$id];
+    cache_set("$type:$id", $data, 'cache_restapi');
+  } else {
+    $data = $cache->data;
+  }
+  return $data;
 }

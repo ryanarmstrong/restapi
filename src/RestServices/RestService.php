@@ -10,7 +10,6 @@ use Drupal\restapi\RestServiceInterface;
 use Drupal\restapi\Filters\FilterDefault;
 use Drupal\restapi\Formatters\FormatterProperty;
 use Drupal\restapi\Formatters\FormatterField;
-use Drupal\restapi\YamlConfigDiscovery;
 
 /**
  * Provides a base RESTful service class.
@@ -141,13 +140,8 @@ class RestService implements RestServiceInterface {
     // Load query string.
     $this->query_parameters = drupal_get_query_parameters();
 
-    $config_discovery = new YamlConfigDiscovery();
-
     // Store the configuration for this route.
-    $defined_routes = $config_discovery->parsedConfig('restapi.routing.yml');
-    if (isset($defined_routes[$route_id])) {
-      $this->route = $defined_routes[$route_id];
-    }
+    $this->route = restapi_service_config('routes', $route_id);
 
     // Set the entity identifier.
     $entity_info = entity_get_info($this->route['requirements']['type']);
@@ -157,31 +151,27 @@ class RestService implements RestServiceInterface {
     $this->query = db_select($this->route['requirements']['type'], $this->route['requirements']['type']);
     $this->query->fields($this->route['requirements']['type'], array($this->entity_identifier));
 
-    // Store the mapping for this route.
-    $defined_mappings = $config_discovery->parsedConfig('restapi.mappings.yml');
     // Load the default mapper defined by the route.
-    if (isset($defined_mappings[$this->route['defaults']['mapping']])) {
-      $this->mappings = $defined_mappings[$this->route['defaults']['mapping']];
+    if (isset($this->route['defaults']['mapper'])) {
+      $this->mappings = restapi_service_config('mappers', $this->route['defaults']['mapper'], TRUE);
     }
     // Override the route default with a mapper provided by the caller.
-    if (isset($this->variables['mapping'])) {
-      $this->mappings = $defined_mappings[$this->variables['mapping']];
+    if (isset($this->variables['mapper'])) {
+      $this->mappings = restapi_service_config('mappers', $this->variables['mapper']);
     }
     // Override the caller mapper with a mapper provided by the client request.
-    if (isset($this->query_parameters['mapping'])) {
-      $this->mappings = $defined_mappings[$this->query_parameters['mapping']];
+    if (isset($this->query_parameters['mapper'])) {
+      $this->mappings = restapi_service_config('mappers', $this->query_parameters['mapper']);
     }
 
     // Load defined filters and save the ones to use for this route.
-    $defined_filters = $config_discovery->parsedConfig('restapi.filters.yml');
-    if (isset($defined_filters[$this->route['defaults']['filters']])) {
-      $this->filters = $defined_filters[$this->route['defaults']['filters']];
+    if (isset($this->route['defaults']['filter'])) {
+      $this->filters = restapi_service_config('filters', $this->route['defaults']['filter']);
     }
 
     // Store the sorters for this route.
-    $defined_sorters = $config_discovery->parsedConfig('restapi.sorters.yml');
-    if (isset($defined_sorters[$this->route['defaults']['sorters']])) {
-      $this->sorters = $defined_sorters[$this->route['defaults']['sorters']];
+    if (isset($this->route['defaults']['sorter'])) {
+      $this->sorters = restapi_service_config('sorters', $this->route['defaults']['sorter']);
     }
   }
 
