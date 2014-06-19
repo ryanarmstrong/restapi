@@ -362,6 +362,9 @@ class RestService implements RestServiceInterface {
       $this->query->orderBy($orderby, $sort);
     }
 
+    // Get the total count for this query.
+    drupal_add_http_header('X-Total-Count',$this->query->countQuery()->execute()->fetchField(), TRUE);
+
     $start = isset($this->query_parameters['start']) ? $this->query_parameters['start'] : 0;
     // Set the sorting if a limit has been provided.
     if (isset($limit)) {
