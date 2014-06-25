@@ -232,6 +232,11 @@ class RestService implements RestServiceInterface {
   protected function retrieveEntities() {
     // If an entity ID is provided, format that entity.
     if (!empty($this->etids)) {
+      // Call any custom callbacks.
+      if (isset($this->route['requirements']['custom_callback'])) {
+        call_user_func($this->route['requirements']['custom_callback'], array($this->variables, $this->query));
+      }
+
       // Format the entities returned.
       return $this->formatEntities();
     }
