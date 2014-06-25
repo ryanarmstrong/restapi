@@ -85,3 +85,10 @@ function restapi_service_config($type, $id, $reset = FALSE) {
   }
   return $data;
 }
+
+/**
+ * Implements hook_flush_caches().
+ */
+function restapi_flush_caches() {
+  return array('cache_restapi');
+}
