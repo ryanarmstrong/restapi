@@ -2,20 +2,44 @@
 
 /**
  * @file
- * Contains \Drupal\restapi\Formatters\FormatterProperty.
- *
- * Certain contrib-added properties don't support Entity API.
- * This Formatter handles those properties.
+ * Contains \Drupal\restapi\Formatters\FormatterBase.
  */
 
 namespace Drupal\restapi\Formatters;
 
 use Drupal\restapi\FormatterInterface;
-use Drupal\restapi\Formatters\FormatterBase;
 
-class FormatterProperty extends FormatterBase implements FormatterInterface {
+class FormatterBase implements FormatterInterface {
   /**
-   * FormatterProperty contructor.
+   * The Entity API wrapper for the Entity.
+   *
+   * @var array
+   */
+  protected $wrapper;
+
+  /**
+   * The Entity value requested, unformatted.
+   *
+   * @var array
+   */
+  protected $value;
+
+  /**
+   * The Entity value requested, formatted.
+   *
+   * @var array
+   */
+  public $formatted_value;
+
+  /**
+   * The status of the formatter after running any validation.
+   *
+   * @var array
+   */
+  public $status = TRUE;
+
+  /**
+   * FormatterBase contructor.
    *
    * @param string $route_id
    *   The ID of the route.
@@ -23,7 +47,8 @@ class FormatterProperty extends FormatterBase implements FormatterInterface {
    *   The variables available to the RestService.
    */
   public function __construct($entity, $entity_type, $key) {
-    $this->value = $entity->$key;
+    $this->wrapper = entity_metadata_wrapper($entity_type, $entity);
+    $this->value = $this->wrapper->$key->value();
     // Handle empty value instances.
     if (empty($this->value)) {
       $this->status = NULL;
