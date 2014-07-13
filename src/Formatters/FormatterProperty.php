@@ -17,12 +17,14 @@ class FormatterProperty extends FormatterBase implements FormatterInterface {
   /**
    * FormatterProperty contructor.
    *
-   * @param string $route_id
-   *   The ID of the route.
-   * @param array $variables
-   *   The variables available to the RestService.
+   * @param EntityObject $entity
+   *   The entity to get the properties from.
+   * @param string $entity_type
+   *   The entity type.
+   * @param string $key
+   *   The property key to return.
    */
-  public function __construct($entity, $entity_type, $key) {
+  public function __construct($entity, $key) {
     $this->value = $entity->$key;
     // Handle empty value instances.
     if (empty($this->value)) {

@@ -18,6 +18,13 @@ class FormatterBase implements FormatterInterface {
   protected $wrapper;
 
   /**
+   * The entity.
+   *
+   * @var array
+   */
+  protected $entity;
+
+  /**
    * The Entity value requested, unformatted.
    *
    * @var array
@@ -41,13 +48,14 @@ class FormatterBase implements FormatterInterface {
   /**
    * FormatterBase contructor.
    *
-   * @param string $route_id
-   *   The ID of the route.
-   * @param array $variables
-   *   The variables available to the RestService.
+   * @param EntityObject $entity
+   *   The entity being formatted.
+   * @param string $key
+   *   The key of the field or property to format.
    */
-  public function __construct($entity, $entity_type, $key) {
-    $this->wrapper = entity_metadata_wrapper($entity_type, $entity);
+  public function __construct($entity, $key) {
+    $this->entity = $entity;
+    $this->wrapper = entity_metadata_wrapper($entity->type, $entity);
     $this->value = $this->wrapper->$key->value();
     // Handle empty value instances.
     if (empty($this->value)) {
