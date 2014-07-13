@@ -50,12 +50,14 @@ class FormatterBase implements FormatterInterface {
    *
    * @param EntityObject $entity
    *   The entity being formatted.
+   * @param string $entity_type
+   *   The entity being formatted.
    * @param string $key
    *   The key of the field or property to format.
    */
-  public function __construct($entity, $key) {
+  public function __construct($entity, $entity_type, $key) {
     $this->entity = $entity;
-    $this->wrapper = entity_metadata_wrapper($entity->type, $entity);
+    $this->wrapper = entity_metadata_wrapper($entity_type, $entity);
     $this->value = $this->wrapper->$key->value();
     // Handle empty value instances.
     if (empty($this->value)) {
