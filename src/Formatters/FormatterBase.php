@@ -20,21 +20,21 @@ class FormatterBase implements FormatterInterface {
   /**
    * The entity.
    *
-   * @var array
+   * @var object
    */
   protected $entity;
 
   /**
-   * The Entity value requested, unformatted.
+   * The value requested, unformatted.
    *
-   * @var array
+   * @var mixed
    */
   protected $value;
 
   /**
-   * The Entity value requested, formatted.
+   * The value requested, formatted.
    *
-   * @var array
+   * @var mixed
    */
   public $formatted_value;
 
