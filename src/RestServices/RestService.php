@@ -7,9 +7,6 @@
 namespace Drupal\restapi\RestServices;
 
 use Drupal\restapi\RestServiceInterface;
-use Drupal\restapi\Filters\FilterDefault;
-use Drupal\restapi\Formatters\FormatterProperty;
-use Drupal\restapi\Formatters\FormatterField;
 
 /**
  * Provides a base RESTful service class.
@@ -244,13 +241,10 @@ class RestService implements RestServiceInterface {
     // Set the requirements.
     $this->setRequirements();
 
-    // Only procede if the client passed filters.
-    if (!empty($this->query_parameters)) {
-      // Run the query filters.
-      $this->setQueryFilters();
-    }
+    // Run the query filters.
+    $this->setQueryFilters();
 
-    // Set the filters.
+    // Set the sorters.
     $this->setSorters();
 
     // Run the query, load the entities, and format them.
@@ -298,43 +292,50 @@ class RestService implements RestServiceInterface {
    * Sets the filters for the query.
    */
   protected function setQueryFilters() {
-    // Loop through the passed query parameters.
-    foreach ($this->query_parameters as $filter_name => $values) {
-      // Check to make sure this is a supported filter and it isn't empty.
-      if (array_key_exists($filter_name, $this->filters) && !empty($values)) {
-        // Set the default filter. Can be overriden later.
-        $filter = new FilterDefault();
-        // Check for a defined filter to use.
-        if (isset($this->filters[$filter_name]['filter'])) {
-          $filter = new $this->filters[$filter_name]['filter']();
-        }
-        $filter_results = $filter->filterQuery($this->query, $this->filters[$filter_name], $values, $this->route['requirements']['type']);
+    // Loop through the filters.
+    $filter_list = $this->buildFilterList();
+    foreach ($filter_list as $filter_name => $filter_definition) {
+      // Set the filter and run it.
+      $filter_type = isset($filter_definition['filter']) ? $filter_definition['filter'] : '\Drupal\restapi\Filters\FilterBase';
+      $filter = new $filter_type($filter_definition);
+      $filter_results = $filter->filterQuery($this->query);
 
-        // Set the query to the modified version if returned.
-        if (isset($filter_results['query'])) {
-          $this->query = $filter_results['query'];
-        }
-
-        // Set any postQueryFilters returned instead of a moded query.
-        if (isset($filter_results['post_query_filters'])) {
-          $this->postQueryFilters[] = $filter_results['post_query_filters'];
-        }
-      }
+      // Set any postQueryFilters returned instead of a moded query.
+      // TO-DO
     }
   }
 
   /**
-   * Sets any NOT operator filters on fields with multiple values passed along.
+   * Helper function that builds the query filters to be run.
+   */
+  protected function buildFilterList() {
+    $filter_list = array();
+    // First find any filters that have defaults, which should be run.
+    foreach ($this->filters as $filter_name => $filter) {
+      if (isset($filter['default'])) {
+        $filter_list[$filter_name] = $filter;
+        $filter_list[$filter_name]['value'] = $filter['default'];
+      }
+    }
+    // Now find any passed filters in the query string.
+    foreach ($this->query_parameters as $filter_name => $value) {
+      if (isset($this->filters[$filter_name])) {
+        $filter_list[$filter_name] = $this->filters[$filter_name];
+        $filter_list[$filter_name]['value'] = $value;
+      }
+    }
+    return $filter_list;
+  }
+
+  /**
+   * Sets the filters to act on the data after the main query.
    */
   protected function setPostQueryFilters() {
     foreach ($this->postQueryFilters as $postQueryFilters) {
       // Set the default filter. Can be overriden later.
-      $filter = new FilterDefault();
-      // Check for a defined filter to use.
-      if (isset($postQueryFilters['filter'])) {
-        $filter = new $postQueryFilters['filter']();
-      }
-      $this->etids = $filter->filterPostQuery($this->etids, $postQueryFilters);
+      $filter_type = isset($postQueryFilters['filter']) ? $postQueryFilters['filter'] : 'FilterBase';
+      $filter = new $filter_type($postQueryFilters);
+      $filter->filterPostQuery($this->etids);
     }
   }
 
