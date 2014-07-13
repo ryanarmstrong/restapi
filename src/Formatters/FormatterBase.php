@@ -34,7 +34,7 @@ class FormatterBase implements FormatterInterface {
   /**
    * The status of the formatter after running any validation.
    *
-   * @var array
+   * @var boolean
    */
   public $status = TRUE;
 
