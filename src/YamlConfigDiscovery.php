@@ -22,12 +22,15 @@ class YamlConfigDiscovery {
         $config[$key] = $value;
       }
     }
-
     return $config;
   }
 
   /**
    * Parse YAML routing files.
+   *
+   * @param string $mask
+   *   The mask to filter files by.
+   *
    * @return array
    *   An array of routes.
    */
