@@ -206,7 +206,7 @@ class RestService implements RestServiceInterface {
     }
 
     // Validate that the requested format is supported.
-    if (!in_array($this->request['HTTP_ACCEPT'], $this->route['content_types'])) {
+    if (strpos($this->request['HTTP_ACCEPT'], '*/*') === FALSE && !in_array($this->request['HTTP_ACCEPT'], $this->route['content_types'])) {
       http_response_code(406);
 
       return array(
