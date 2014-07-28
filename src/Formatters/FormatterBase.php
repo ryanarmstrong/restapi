@@ -36,7 +36,7 @@ class FormatterBase implements FormatterInterface {
    *
    * @var mixed
    */
-  public $this->formatted_value;
+  public $formatted_value;
 
   /**
    * The status of the formatter after running any validation.
