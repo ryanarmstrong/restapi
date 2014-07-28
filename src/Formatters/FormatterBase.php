@@ -36,7 +36,7 @@ class FormatterBase implements FormatterInterface {
    *
    * @var mixed
    */
-  public $formatted_value;
+  public $this->formatted_value;
 
   /**
    * The status of the formatter after running any validation.
@@ -72,6 +72,8 @@ class FormatterBase implements FormatterInterface {
    *   Simply returns the value.
    */
   public function format() {
-    return $this->value;
+    $this->formatted_value = array();
+    $this->formatted_value = $this->value;
+    return $this->formatted_value;
   }
 }

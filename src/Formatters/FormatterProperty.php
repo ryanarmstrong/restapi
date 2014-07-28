@@ -39,6 +39,8 @@ class FormatterProperty extends FormatterBase implements FormatterInterface {
    *   Simply returns the value.
    */
   public function format() {
-    return $this->value;
+    $this->formatted_value = '';
+    $this->formatted_value = $this->value;
+    return $this->formatted_value;
   }
 }
