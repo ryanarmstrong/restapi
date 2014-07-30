@@ -72,8 +72,7 @@ class FormatterBase implements FormatterInterface {
    *   Simply returns the value.
    */
   public function format() {
-    $this->formatted_value = array();
-    $this->formatted_value = $this->value;
+    $this->formatted_value = !empty($this->value) ? $this->value : array();
     return $this->formatted_value;
   }
 }
