@@ -69,14 +69,9 @@ function restapi_callback($route_name, $etid = NULL) {
  */
 function restapi_output($var) {
   if (isset($var)) {
-    if (strpos($_SERVER['HTTP_ACCEPT'], 'text/html') !== FALSE) {
-      echo '<pre>' . json_encode($var, JSON_PRETTY_PRINT | JSON_HEX_TAG | JSON_HEX_AMP) . '</pre>';
-    } else {
-      // We are returning JSON, so tell the browser.
-      drupal_add_http_header('Content-Type', 'application/json');
-      echo json_encode($var, JSON_HEX_TAG | JSON_HEX_AMP);
-    }
-    
+    // We are returning JSON, so tell the browser.
+    drupal_add_http_header('Content-Type', 'application/json');
+    echo json_encode($var, JSON_HEX_TAG | JSON_HEX_AMP);
   }
 }
 
