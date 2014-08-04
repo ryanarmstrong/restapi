@@ -59,6 +59,14 @@ class FormatterBase implements FormatterInterface {
     $this->entity = $entity;
     $this->wrapper = entity_metadata_wrapper($entity_type, $entity);
     $this->value = $this->wrapper->$key->value();
+    // Handle variable casting.
+    $type = $this->wrapper->$key->type();
+    switch ($type) {
+      case 'date':
+        $type = 'integer';
+        break;
+    }
+    settype($this->value, $type);
     // Handle empty value instances.
     if (empty($this->value)) {
       $this->status = NULL;
