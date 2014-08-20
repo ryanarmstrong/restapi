@@ -396,7 +396,7 @@ class RestService implements RestServiceInterface {
           $formatter_type = isset($map['formatter']) ? $map['formatter'] : '\Drupal\restapi\Formatters\FormatterBase';
           $formatter = new $formatter_type($entity, $this->route['requirements']['type'], $field_name);
           // Call the appropriete formatter if data exists.
-          $formatted_entities[$etid][$map['label']] = isset($formatter->status) ? $formatter->format() : $formatter->status;
+          $formatted_entities[$etid][$map['label']] = $formatter->format();
         }
       }
       return array_values($formatted_entities);

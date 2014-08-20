@@ -26,10 +26,6 @@ class FormatterProperty extends FormatterBase implements FormatterInterface {
    */
   public function __construct($entity, $key) {
     $this->value = $entity->$key;
-    // Handle empty value instances.
-    if (empty($this->value)) {
-      $this->status = NULL;
-    }
   }
 
   /**

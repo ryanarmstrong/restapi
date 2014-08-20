@@ -39,13 +39,6 @@ class FormatterBase implements FormatterInterface {
   public $formatted_value;
 
   /**
-   * The status of the formatter after running any validation.
-   *
-   * @var boolean
-   */
-  public $status = TRUE;
-
-  /**
    * FormatterBase contructor.
    *
    * @param EntityObject $entity
@@ -67,10 +60,6 @@ class FormatterBase implements FormatterInterface {
         break;
     }
     settype($this->value, $type);
-    // Handle empty value instances.
-    if (empty($this->value)) {
-      $this->status = NULL;
-    }
   }
 
   /**
