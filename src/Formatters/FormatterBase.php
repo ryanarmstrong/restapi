@@ -18,6 +18,13 @@ class FormatterBase implements FormatterInterface {
   protected $wrapper;
 
   /**
+   * The field info.
+   *
+   * @var object
+   */
+  protected $field_info;
+
+  /**
    * The entity.
    *
    * @var object
@@ -52,6 +59,7 @@ class FormatterBase implements FormatterInterface {
     $this->entity = $entity;
     $this->wrapper = entity_metadata_wrapper($entity_type, $entity);
     $this->value = $this->wrapper->$key->value();
+    $this->field_info = $this->wrapper->$key->info();
     // Handle variable casting.
     $type = $this->wrapper->$key->type();
     switch ($type) {
