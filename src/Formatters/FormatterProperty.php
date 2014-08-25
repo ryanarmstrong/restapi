@@ -24,7 +24,7 @@ class FormatterProperty extends FormatterBase implements FormatterInterface {
    * @param string $key
    *   The property key to return.
    */
-  public function __construct($entity, $key) {
+  public function __construct($entity, $entity_type, $key) {
     $this->value = $entity->$key;
   }
 
