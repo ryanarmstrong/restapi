@@ -185,7 +185,7 @@ class RestService implements RestServiceInterface {
   public function generateResponse() {
     if (empty($this->etids) && $this->validation === TRUE) {
       $this->retrieveEntities();
-    } else {
+    } elseif($this->validation !== TRUE) {
       return $this->validation;
     }
     if (!empty($this->etids)) {
