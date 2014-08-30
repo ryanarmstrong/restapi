@@ -27,7 +27,7 @@ class RestService implements RestServiceInterface {
    *
    * @var array
    */
-  protected $etids;
+  protected $etids = array();
 
   /**
    * The filters supported by the service.
@@ -103,6 +103,13 @@ class RestService implements RestServiceInterface {
   protected $sorters;
 
   /**
+   * The validation status of the request.
+   *
+   * @var array
+   */
+  protected $validation;
+
+  /**
    * An array of options passed to the Service.
    *
    * - supported_requests
@@ -122,17 +129,21 @@ class RestService implements RestServiceInterface {
   public $variables;
 
   /**
-   * RestService contructor.
+   * RestService contructor. Returns validation response.
    *
    * @param string $route_id
    *   The ID of the route.
    * @param array $variables
    *   The variables available to the RestService.
+   * @return array
+   *   Returns the validation response for the client.
    */
   public function __construct($route_id, $variables) {
     $this->request = $_SERVER;
     $this->variables = $variables;
-    $this->etids = isset($variables['etid']) ? array($variables['etid']) : array();
+
+    // Setup and array for a resource collection or just set the entity id for a single resource.
+    $this->etids = !empty($variables['etid']) ? array($variables['etid']) : array();
 
     // Load query string.
     $this->query_parameters = drupal_get_query_parameters();
@@ -140,35 +151,29 @@ class RestService implements RestServiceInterface {
     // Store the configuration for this route.
     $this->route = restapi_service_config('routes', $route_id);
 
-    // Set the entity identifier.
-    $entity_info = entity_get_info($this->route['requirements']['type']);
-    $this->entity_identifier = $entity_info['entity keys']['id'];
+    // Validate the response. If it doesn't validate we don't need to do anything.
+    $this->validation = $this->validateRequest();
+    if ($this->validation === TRUE) {
+      // Set the entity identifier.
+      $entity_info = entity_get_info($this->route['requirements']['type']);
+      $this->entity_identifier = $entity_info['entity keys']['id'];
 
-    // Setup the query object.
-    $this->query = db_select($this->route['requirements']['type'], $this->route['requirements']['type']);
-    $this->query->fields($this->route['requirements']['type'], array($this->entity_identifier));
+      // Setup the query object.
+      $this->query = db_select($this->route['requirements']['type'], $this->route['requirements']['type']);
+      $this->query->fields($this->route['requirements']['type'], array($this->entity_identifier));
 
-    // Load the default mapper defined by the route.
-    if (isset($this->route['defaults']['mapper'])) {
-      $this->mappings = restapi_service_config('mappers', $this->route['defaults']['mapper'], TRUE);
-    }
-    // Override the route default with a mapper provided by the caller.
-    if (isset($this->variables['mapper'])) {
-      $this->mappings = restapi_service_config('mappers', $this->variables['mapper']);
-    }
-    // Override the caller mapper with a mapper provided by the client request.
-    if (isset($this->query_parameters['mapper'])) {
-      $this->mappings = restapi_service_config('mappers', $this->query_parameters['mapper']);
-    }
+      // Load the mapper, if defined.
+      $this->mappings = restapi_service_config('mappers', $this->requestMapper());
 
-    // Load defined filters and save the ones to use for this route.
-    if (isset($this->route['defaults']['filter'])) {
-      $this->filters = restapi_service_config('filters', $this->route['defaults']['filter']);
-    }
+      // Load defined filters and save the ones to use for this route.
+      if (isset($this->route['defaults']['filter'])) {
+        $this->filters = restapi_service_config('filters', $this->route['defaults']['filter']);
+      }
 
-    // Store the sorters for this route.
-    if (isset($this->route['defaults']['sorter'])) {
-      $this->sorters = restapi_service_config('sorters', $this->route['defaults']['sorter']);
+      // Store the sorters for this route.
+      if (isset($this->route['defaults']['sorter'])) {
+        $this->sorters = restapi_service_config('sorters', $this->route['defaults']['sorter']);
+      }
     }
   }
 
@@ -178,14 +183,33 @@ class RestService implements RestServiceInterface {
    *   Returns the response for the client.
    */
   public function generateResponse() {
-    // First validate the response.
-    $this->response = $validation = $this->validateRequest();
-    if ($validation['status'] === 'ok') {
-      // Retrieve the requested entities.
-      $this->response = $this->retrieveEntities();
+    if (empty($this->etids) && $this->validation === TRUE) {
+      $this->retrieveEntities();
+    } else {
+      return $this->validation;
+    }
+    if (!empty($this->etids)) {
+      return $this->formatEntities();
     }
 
-    return $this->response;
+    return array(
+      'status' => 'no_results',
+      'message' => t('There are no entities that match the given conditions.'),
+    );
+  }
+
+  /**
+   * Returns the entity IDs that were collected by the request.
+   * @return array
+   *   An array of entity IDs.
+   */
+  public function getEntityIds() {
+    if (empty($this->etids) && $this->validation === TRUE) {
+      $this->retrieveEntities();
+    } else {
+      return $this->validation;
+    }
+    return $this->etids;
   }
 
   /**
@@ -197,7 +221,6 @@ class RestService implements RestServiceInterface {
     // Validate that the request method is supported.
     if (!in_array($this->request['REQUEST_METHOD'], $this->route['methods'])) {
       http_response_code(406);
-
       return array(
         'status' => 'unsupported_method',
         'message' => t('This service does not support the !method method.', array('!method' => $this->request['REQUEST_METHOD'])),
@@ -208,7 +231,6 @@ class RestService implements RestServiceInterface {
     // Validate that the requested format is supported.
     if (!empty($this->request['HTTP_ACCEPT']) && (strpos($this->request['HTTP_ACCEPT'], '*/*') === FALSE && !in_array($this->request['HTTP_ACCEPT'], $this->route['content_types']))) {
       http_response_code(406);
-
       return array(
         'status' => 'unsupported_content_type',
         'message' => t('This service does not support the @format format.', array('@format' => $this->request['HTTP_ACCEPT'])),
@@ -216,9 +238,7 @@ class RestService implements RestServiceInterface {
       );
     }
 
-    return array(
-      'status' => 'ok',
-    );
+    return TRUE;
   }
 
   /**
@@ -227,47 +247,40 @@ class RestService implements RestServiceInterface {
    *   Returns an array of formatted entities.
    */
   protected function retrieveEntities() {
-    // If an entity ID is provided, format that entity.
-    if (!empty($this->etids)) {
-      // Call any custom callbacks.
-      if (isset($this->route['requirements']['custom_callback'])) {
-        call_user_func($this->route['requirements']['custom_callback'], array($this->variables, $this->query));
+    $path = $_SERVER['REQUEST_URI'];
+    $cache = cache_get("$path", 'cache_restapi_collections');
+    if (!$cache) {
+      // If an entity ID is provided, format that entity.
+      if (!empty($this->etids)) {
+        // Call any custom callbacks.
+        if (isset($this->route['requirements']['custom_callback'])) {
+          call_user_func($this->route['requirements']['custom_callback'], array($this->variables, $this->query));
+        }
+        return $this->formatEntities();
       }
 
-      // Format the entities returned.
-      return $this->formatEntities();
+      $this->setRequirements();
+      $this->setQueryFilters();
+      $this->setSorters();
+
+      // Run the query, load the entities, and format them.
+      $results = $this->query->execute();
+      $entity_identifier = $this->entity_identifier;
+      foreach ($results as $value) {
+        $this->etids[$value->$entity_identifier] = $value->$entity_identifier;
+      }
+
+      // Run the post-query filters.
+      if (!empty($this->postQueryFilters)) {
+        $this->setPostQueryFilters();
+      }
+
+      if (!empty($this->etids)) {
+        cache_set("$path", $this->etids, 'cache_restapi_collections');
+      }
+    } else {
+      $this->etids = $cache->data;
     }
-
-    // Set the requirements.
-    $this->setRequirements();
-
-    // Run the query filters.
-    $this->setQueryFilters();
-
-    // Set the sorters.
-    $this->setSorters();
-
-    // Run the query, load the entities, and format them.
-    $results = $this->query->execute();
-    $entity_identifier = $this->entity_identifier;
-    foreach ($results as $value) {
-      $this->etids[$value->$entity_identifier] = $value->$entity_identifier;
-    }
-
-    // Run the post-query filters.
-    if (!empty($this->postQueryFilters)) {
-      $this->setPostQueryFilters();
-    }
-
-    if (!empty($this->etids)) {
-      return $this->formatEntities();
-    }
-
-    // Return an error response if no results were returned.
-    return array(
-      'status' => 'no_results',
-      'message' => t('There are no entities that match the given conditions.'),
-    );
   }
 
   /**
@@ -384,25 +397,50 @@ class RestService implements RestServiceInterface {
    *   A node formatted into an array.
    */
   protected function formatEntities() {
-    // Load the entities.
-    $unformatted_entities = entity_load($this->route['requirements']['type'], $this->etids);
     $formatted_entities = array();
-
-    // Use the provided mapping.
-    if (isset($this->mappings)) {
-      foreach ($unformatted_entities as $etid => $entity) {
-        foreach ($this->mappings as $field_name => $map) {
-          // Check for a custom formatter, use FormatterBase otherwise.
-          $formatter_type = isset($map['formatter']) ? $map['formatter'] : '\Drupal\restapi\Formatters\FormatterBase';
-          $formatter = new $formatter_type($entity, $this->route['requirements']['type'], $field_name);
-          // Call the appropriete formatter if data exists.
-          $formatted_entities[$etid][$map['label']] = $formatter->format();
+    foreach ($this->etids as $etid) {
+      $mapper = $this->requestMapper();
+      $cache = cache_get("$etid:$mapper", 'cache_restapi_content');
+      if (!$cache) {
+        $node = node_load($etid);
+        // Use the provided mapping.
+        if (isset($this->mappings)) {
+          $formatted_entity = new \stdClass();
+          foreach ($this->mappings as $field_name => $map) {
+            // Check for a custom formatter, use FormatterBase otherwise. Then format the field.
+            $formatter_type = isset($map['formatter']) ? $map['formatter'] : '\Drupal\restapi\Formatters\FormatterBase';
+            $formatter = new $formatter_type($node, $this->route['requirements']['type'], $field_name);
+            $formatted_entity->$map['label'] = $formatter->format();
+          }
+          $formatted_entities[] = $formatted_entity;
+          cache_set("$etid:$mapper", $formatted_entity, 'cache_restapi_content');
+        } else {
+          // Otherwise just return the unformatted entities.
+          $formatted_entities[] = $unformatted_entity;
         }
+      } else {
+        $formatted_entities[] = $cache->data;
       }
-      return array_values($formatted_entities);
     }
+    
+    return $formatted_entities;
+  }
 
-    // Otherwise just return the unformatted entities.
-    return array_values($unformatted_entities);
+  /**
+   * Returns the name of the mapper to use.
+   * @return string
+   *   The name of the mapper to use.
+   */
+  protected function requestMapper() {
+    // Override the caller mapper with a mapper provided by the client request.
+    if (isset($this->query_parameters['mapper'])) {
+      return $this->query_parameters['mapper'];
+    }
+    // Override the route default with a mapper provided by the caller.
+    if (isset($this->variables['mapper'])) {
+      return $this->variables['mapper'];
+    }
+    // Load the default mapper defined by the route.
+    return !empty($this->route['defaults']['mapper']) ? $this->route['defaults']['mapper'] : '';
   }
 }

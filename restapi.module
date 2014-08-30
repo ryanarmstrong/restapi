@@ -18,11 +18,11 @@ require_once __DIR__ . '/vendor/autoload.php';
 function restapi_menu() {
   $config_discovery = new YamlConfigDiscovery();
   $routes = $config_discovery->parsedConfig('restapi.routes');
-  cache_clear_all('routes:', 'cache_restapi', TRUE);
+  cache_clear_all('routes:', 'cache_restapi_config', TRUE);
 
   $items = array();
   foreach ($routes as $route_name => $route) {
-    cache_set("routes:$route_name", $route, 'cache_restapi');
+    cache_set("routes:$route_name", $route, 'cache_restapi_config');
     $items[$route['path']] = array(
       'page callback' => 'restapi_callback',
       'page arguments' => array($route_name),
@@ -58,7 +58,7 @@ function restapi_menu() {
  *   A formatted response to the clients request.
  */
 function restapi_callback($route_name, $etid = NULL) {
-  $variables = array('etid' => $etid);
+  $variables = !empty($etid) ? array('etid' => $etid) : array();
   $service = new RestService($route_name, $variables);
 
   return $service->generateResponse();
@@ -76,12 +76,14 @@ function restapi_output($var) {
 }
 
 function restapi_service_config($type, $id, $reset = FALSE) {
-  $cache = cache_get("$type:$id", 'cache_restapi');
+  $cache = cache_get("$type:$id", 'cache_restapi_config');
   if (!$cache || $reset) {
     $config_discovery = new YamlConfigDiscovery();
     $yaml = $config_discovery->parsedConfig('restapi.' . $type);
     $data = $yaml[$id];
-    cache_set("$type:$id", $data, 'cache_restapi');
+    if (!empty($data)) {
+      cache_set("$type:$id", $data, 'cache_restapi_config');
+    }
   } else {
     $data = $cache->data;
   }
@@ -92,5 +94,5 @@ function restapi_service_config($type, $id, $reset = FALSE) {
  * Implements hook_flush_caches().
  */
 function restapi_flush_caches() {
-  return array('cache_restapi');
+  return array('cache_restapi_config', 'cache_restapi_collections', 'cache_restapi_content');
 }

@@ -9,7 +9,13 @@
  * Implements hook_schema().
  */
 function restapi_schema() {
-  $schema['cache_restapi'] = drupal_get_schema_unprocessed('system', 'cache');
-  $schema['cache_restapi']['description'] = 'Cache table for restapi routing information.';
+  $schema['cache_restapi_config'] = drupal_get_schema_unprocessed('system', 'cache');
+  $schema['cache_restapi_config']['description'] = 'Cache table for restapi routing information.';
+  // Create the schema for caching a collection of resources for a specific REST request.
+  $schema['cache_restapi_collections'] = drupal_get_schema_unprocessed('system', 'cache');
+  $schema['cache_restapi_collections']['description'] = 'Cache table for restapi collections from a REST request.';
+  // Create the schema for caching content in a specifc mapper and format.
+  $schema['cache_restapi_content'] = drupal_get_schema_unprocessed('system', 'cache');
+  $schema['cache_restapi_content']['description'] = 'Cache table for restapi formatted content.';
   return $schema;
 }
