@@ -1,0 +1,6 @@
+name = REST API Statistics
+description = Provides statistics regarding RESTful services.
+package = REST API
+core = 7.x
+
+dependencies[] = restapi
