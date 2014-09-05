@@ -26,10 +26,6 @@ class FilterBase implements FilterInterface {
   /**
    * FilterBase contructor.
    *
-   * @param QueryObject $query
-   *   The query to filter.
-   * @param array $variables
-   *   The variables available to the RestService.
    */
   public function __construct($filter_definition) {
     $this->filter = $filter_definition;
