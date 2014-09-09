@@ -71,7 +71,7 @@ function restapi_output($var) {
   if (isset($var)) {
     // We are returning JSON, so tell the browser.
     drupal_add_http_header('Content-Type', 'application/json');
-    echo json_encode($var, JSON_HEX_TAG | JSON_HEX_AMP);
+    echo json_encode($var, JSON_UNESCAPED_SLASHES);
   }
 }
 
