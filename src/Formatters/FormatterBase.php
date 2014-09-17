@@ -27,7 +27,7 @@ class FormatterBase implements FormatterInterface {
   /**
    * The field type.
    *
-   * @var object
+   * @var string
    */
   protected $type;
 
