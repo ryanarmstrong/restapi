@@ -25,6 +25,13 @@ class FormatterBase implements FormatterInterface {
   protected $field_info;
 
   /**
+   * The field type.
+   *
+   * @var object
+   */
+  protected $type;
+
+  /**
    * The entity.
    *
    * @var object
@@ -59,15 +66,15 @@ class FormatterBase implements FormatterInterface {
     $this->entity = $entity;
     $this->wrapper = entity_metadata_wrapper($entity_type, $entity);
     $this->value = $this->wrapper->$key->value();
-    $this->field_info = $this->wrapper->$key->info();
+    $this->field_info = field_info_field($key);
     // Handle variable casting.
-    $type = $this->wrapper->$key->type();
-    switch ($type) {
+    $this->type = $this->wrapper->$key->type();
+    switch ($this->type) {
       case 'date':
-        $type = 'integer';
+        $this->type = 'integer';
         break;
     }
-    settype($this->value, $type);
+    settype($this->value, $this->type);
   }
 
   /**
@@ -77,7 +84,7 @@ class FormatterBase implements FormatterInterface {
    *   Simply returns the value.
    */
   public function format() {
-    $this->formatted_value = !empty($this->value) ? $this->value : array();
+    $this->formatted_value = isset($this->value) ? $this->value : restapi_get_empty($this->type, $this->field_info['cardinality']);
     return $this->formatted_value;
   }
 }
