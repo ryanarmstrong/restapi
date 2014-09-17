@@ -117,3 +117,20 @@ function restapi_entity_delete($entity, $type) {
 function restapi_entity_update($entity, $type) {
   // Define caching strategy when an entity is updated.
 }
+
+/**
+ * Determin the proper empty variable.
+ */
+function restapi_get_empty($type, $cardinality) {
+  if ($cardinality != 1) {
+    return array();
+  }
+  switch ($type) {
+    case 'integer':
+      return null;
+    case 'boolean':
+      return false;
+    default:
+      return '';
+  }
+}
