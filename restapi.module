@@ -98,27 +98,6 @@ function restapi_flush_caches() {
 }
 
 /**
- * Implements hook_entity_insert().
- */
-function restapi_entity_insert($entity, $type) {
-  // Define caching strategy when an entity is inserted.
-}
-
-/**
- * Implements hook_entity_delete().
- */
-function restapi_entity_delete($entity, $type) {
-  // Define caching strategy when an entity is deleted.
-}
-
-/**
- * Implements hook_entity_update().
- */
-function restapi_entity_update($entity, $type) {
-  // Define caching strategy when an entity is updated.
-}
-
-/**
  * Determin the proper empty variable.
  */
 function restapi_get_empty($type, $cardinality) {
