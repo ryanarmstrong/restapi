@@ -11,7 +11,7 @@ use Drupal\restapi\RestServiceInterface;
 /**
  * Provides a base RESTful service class.
  */
-class RestService implements RestServiceInterface {
+class NodeRestService implements RestServiceInterface {
   /**
    * The request from the client application.
    *
