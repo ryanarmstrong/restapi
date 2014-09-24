@@ -1,0 +1,52 @@
+# Creating a Mapper
+example:
+	- 'An array of field formatters to use to build a reponse.'
+
+# Field Formatters
+
+# Entity Property
+name:
+	type: 'property'
+	property: 'The property name'
+	label: 'A label to be used in a REST Response. Optional.'
+
+# Field API
+name:
+	type: 'field'
+	field: 'The field name'
+	label: 'A label to be used in a REST Response. Optional.'
+
+# File
+name:
+	type: 'file'
+	field: 'The field that contains the File ID.'
+	label: 'A label to be used in a REST Response. Optional.'
+
+# Image
+fieldname:
+	type: 'image'
+	field: 'The field that contains the image.'
+	label: 'A label to be used in a REST Response. Optional.'
+	image_styles:
+		- 'An array of image style names to include in response. Optional.'
+
+# REST Service
+name:
+	type: 'rest'
+	endpoint: 'The endpoint to access to request a response from.'
+	label: 'A label to be used in a REST Response. Optional.'
+
+# Callback
+name:
+	type: 'callback'
+	callback: 'The custom Formatter to use to process this field.'
+	variables:
+		- 'An array of variables to pass to the callback. Optional.'
+	label: 'A label to be used in a REST Response. Optional.'
+
+# Composite
+name:
+	type: 'composite'
+	fields: 
+		- 'An array of other field formatters to use to build a composite field from.'
+	label: 'A label to be used in a REST Response. Optional.'
