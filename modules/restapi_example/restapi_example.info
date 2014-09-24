@@ -1,0 +1,6 @@
+name = REST API Example Service
+description = Provides a RESTful example service.
+package = REST API
+core = 7.x
+
+dependencies[] = restapi
