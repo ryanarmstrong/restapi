@@ -285,30 +285,6 @@ abstract class BaseRestService implements RestServiceInterface {
   }
 
   /**
-   * Helper function that builds the query filters to be run.
-   */
-  protected function buildFilterList() {
-    $filter_list = array();
-    // First find any filters that have defaults, which should be run.
-    foreach ($this->filters as $filter_name => $filter) {
-      if (isset($filter['default'])) {
-        $filter_list[$filter_name] = $filter;
-        $filter_list[$filter_name]['value'] = $filter['default'];
-      }
-    }
-    // Now find any passed filters in the query string.
-    foreach ($this->query_parameters as $filter_name => $value) {
-      if (isset($this->filters[$filter_name])) {
-        $filter_list[$filter_name] = $this->filters[$filter_name];
-        $filter_list[$filter_name]['value'] = $value;
-      }
-    }
-    return $filter_list;
-  }
-    }
-  }
-
-  /**
    * Sets the sorters for the query.
    */
   protected function sortResponse() {
@@ -380,6 +356,28 @@ abstract class BaseRestService implements RestServiceInterface {
     }
     
     return $formatted_entities;
+  }
+
+  /**
+   * Helper function that builds the query filters to be run.
+   */
+  protected function buildFilterList() {
+    $filter_list = array();
+    // First find any filters that have defaults, which should be run.
+    foreach ($this->filters as $filter_name => $filter) {
+      if (isset($filter['default'])) {
+        $filter_list[$filter_name] = $filter;
+        $filter_list[$filter_name]['value'] = $filter['default'];
+      }
+    }
+    // Now find any passed filters in the query string.
+    foreach ($this->query_parameters as $filter_name => $value) {
+      if (isset($this->filters[$filter_name])) {
+        $filter_list[$filter_name] = $this->filters[$filter_name];
+        $filter_list[$filter_name]['value'] = $value;
+      }
+    }
+    return $filter_list;
   }
 
   /**
