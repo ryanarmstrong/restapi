@@ -188,7 +188,7 @@ abstract class BaseRestService implements RestServiceInterface {
     } elseif($this->validation !== TRUE) {
       return $this->validation;
     }
-    return $this->formatEntities();
+    return $this->formatResponse();
   }
 
   /**
@@ -244,12 +244,12 @@ abstract class BaseRestService implements RestServiceInterface {
     $cache = cache_get("$path", 'cache_restapi_collections');
     if (!$cache) {
       $this->setRequirements();
-      $this->setQueryFilters();
-      $this->setSorters();
       // Call custom requirement callback if provided.
       if (isset($this->route['requirements']['custom_callback'])) {
         call_user_func($this->route['requirements']['custom_callback'], array($this->variables, $this->query));
       }
+      $this->filterResponse();
+      $this->sortResponse();
 
       // Run the query, load the entities, and format them.
       $results = $this->query->execute();
@@ -274,7 +274,7 @@ abstract class BaseRestService implements RestServiceInterface {
   /**
    * Sets the filters for the query.
    */
-  protected function setQueryFilters() {
+  protected function filterResponse() {
     // Loop through the filters.
     $filter_list = $this->buildFilterList();
     foreach ($filter_list as $filter_name => $filter_definition) {
@@ -312,7 +312,7 @@ abstract class BaseRestService implements RestServiceInterface {
   /**
    * Sets the sorters for the query.
    */
-  protected function setSorters() {
+  protected function sortResponse() {
     // Set the sorter.
     $router_sorter = isset($this->sorters[$this->query_parameters['orderby']]) ? $this->sorters[$this->query_parameters['orderby']] : $this->sorters[$this->route['defaults']['orderby']];
     if (isset($router_sorter)) {
@@ -353,7 +353,7 @@ abstract class BaseRestService implements RestServiceInterface {
    * @return array
    *   A node formatted into an array.
    */
-  protected function formatEntities() {
+  protected function formatResponse() {
     $formatted_entities = array();
     foreach ($this->etids as $etid) {
       $mapper = $this->requestMapper();
