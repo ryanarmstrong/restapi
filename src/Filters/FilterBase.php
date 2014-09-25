@@ -37,15 +37,5 @@ abstract class FilterBase implements FilterInterface {
    * @return object
    *   The modified query object.
    */
-
-  /**
-   * Filter the entity IDs after the query has been run.
-   *
-   * @return array
-   *   The modified entity ID list.
-   */
-  public function filterPostQuery(&$etids) {
-    // TO-DO
-  }
   abstract public function filterQuery(&$query);
 }

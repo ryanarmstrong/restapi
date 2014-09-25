@@ -270,11 +270,6 @@ abstract class BaseRestService implements RestServiceInterface {
         $this->etids[$value->$entity_identifier] = $value->$entity_identifier;
       }
 
-      // Run the post-query filters.
-      if (!empty($this->postQueryFilters)) {
-        $this->setPostQueryFilters();
-      }
-
       if (!empty($this->etids)) {
         cache_set("$path", $this->etids, 'cache_restapi_collections');
       }
@@ -299,9 +294,6 @@ abstract class BaseRestService implements RestServiceInterface {
       $filter_type = isset($filter_definition['filter']) ? $filter_definition['filter'] : '\Drupal\restapi\Filters\FilterBase';
       $filter = new $filter_type($filter_definition);
       $filter->filterQuery($this->query);
-
-      // Set any postQueryFilters returned instead of a moded query.
-      // TO-DO
     }
   }
 
@@ -326,16 +318,6 @@ abstract class BaseRestService implements RestServiceInterface {
     }
     return $filter_list;
   }
-
-  /**
-   * Sets the filters to act on the data after the main query.
-   */
-  protected function setPostQueryFilters() {
-    foreach ($this->postQueryFilters as $postQueryFilters) {
-      // Set the default filter. Can be overriden later.
-      $filter_type = isset($postQueryFilters['filter']) ? $postQueryFilters['filter'] : 'FilterBase';
-      $filter = new $filter_type($postQueryFilters);
-      $filter->filterPostQuery($this->etids);
     }
   }
 
