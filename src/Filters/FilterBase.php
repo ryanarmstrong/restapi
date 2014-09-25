@@ -9,7 +9,7 @@ namespace Drupal\restapi\Filters;
 
 use Drupal\restapi\FilterInterface;
 
-class FilterBase implements FilterInterface {
+abstract class FilterBase implements FilterInterface {
   /**
    * The filter being used.
    *
@@ -31,16 +31,12 @@ class FilterBase implements FilterInterface {
     $this->filter = $filter_definition;
     $this->value = $filter_definition['value'];
   }
-
   /**
    * Filter an query.
    *
    * @return object
    *   The modified query object.
    */
-  public function filterQuery(&$query) {
-    // TO-DO
-  }
 
   /**
    * Filter the entity IDs after the query has been run.
@@ -51,4 +47,5 @@ class FilterBase implements FilterInterface {
   public function filterPostQuery(&$etids) {
     // TO-DO
   }
+  abstract public function filterQuery(&$query);
 }
