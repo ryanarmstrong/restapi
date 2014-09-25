@@ -37,6 +37,13 @@ abstract class BaseRestService implements RestServiceInterface {
   protected $filters = array();
 
   /**
+   * The headers of the reponse.
+   *
+   * @var array
+   */
+  protected $headers = array();
+
+  /**
    * The sorters mappers used by the service.
    *
    * @var array
@@ -185,6 +192,7 @@ abstract class BaseRestService implements RestServiceInterface {
   public function generateResponse() {
     if (empty($this->etids) && $this->validation === TRUE) {
       $this->retrieveEntities();
+      $this->setHeaders();
     } elseif($this->validation !== TRUE) {
       return $this->validation;
     }
@@ -200,9 +208,25 @@ abstract class BaseRestService implements RestServiceInterface {
     if (empty($this->etids) && $this->validation === TRUE) {
       $this->retrieveEntities();
     } else {
+      $this->setHeaders();
       return $this->validation;
     }
     return $this->etids;
+  }
+
+  public function setHeaders() {
+    $path = $_SERVER['REQUEST_URI'];
+    $cache = cache_get("$path", 'cache_restapi_headers');
+    if (!$cache) {
+      if (!empty($this->headers)) {
+        cache_set("$path", $this->headers, 'cache_restapi_headers');
+      }
+    } else {
+      $this->headers = $cache->data;
+    }
+    foreach ($this->headers as $key => $value) {
+      drupal_add_http_header($key,$value, TRUE);
+    }
   }
 
   /**
@@ -313,8 +337,7 @@ abstract class BaseRestService implements RestServiceInterface {
       $this->query->orderBy($orderby, $sort);
     }
 
-    // Get the total count for this query.
-    drupal_add_http_header('X-Total-Count',$this->query->countQuery()->execute()->fetchField(), TRUE);
+    $this->headers['X-Total-Count'] = $this->query->countQuery()->execute()->fetchField();
 
     $start = isset($this->query_parameters['start']) ? $this->query_parameters['start'] : 0;
     // Set the sorting if a limit has been provided.
