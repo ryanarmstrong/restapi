@@ -251,7 +251,6 @@ abstract class BaseRestService implements RestServiceInterface {
       $this->filterResponse();
       $this->sortResponse();
 
-      // Run the query, load the entities, and format them.
       $results = $this->query->execute();
       $entity_identifier = $this->entity_identifier;
       foreach ($results as $value) {
