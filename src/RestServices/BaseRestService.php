@@ -188,14 +188,7 @@ abstract class BaseRestService implements RestServiceInterface {
     } elseif($this->validation !== TRUE) {
       return $this->validation;
     }
-    if (!empty($this->etids)) {
-      return $this->formatEntities();
-    }
-
-    return array(
-      'status' => 'no_results',
-      'message' => t('There are no entities that match the given conditions.'),
-    );
+    return $this->formatEntities();
   }
 
   /**
@@ -250,18 +243,13 @@ abstract class BaseRestService implements RestServiceInterface {
     $path = $_SERVER['REQUEST_URI'];
     $cache = cache_get("$path", 'cache_restapi_collections');
     if (!$cache) {
-      // If an entity ID is provided, format that entity.
-      if (!empty($this->etids)) {
-        // Call any custom callbacks.
-        if (isset($this->route['requirements']['custom_callback'])) {
-          call_user_func($this->route['requirements']['custom_callback'], array($this->variables, $this->query));
-        }
-        return $this->formatEntities();
-      }
-
       $this->setRequirements();
       $this->setQueryFilters();
       $this->setSorters();
+      // Call custom requirement callback if provided.
+      if (isset($this->route['requirements']['custom_callback'])) {
+        call_user_func($this->route['requirements']['custom_callback'], array($this->variables, $this->query));
+      }
 
       // Run the query, load the entities, and format them.
       $results = $this->query->execute();
