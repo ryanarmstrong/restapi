@@ -11,7 +11,7 @@ use Drupal\restapi\RestServiceInterface;
 /**
  * Provides a base RESTful service class.
  */
-class NodeRestService implements RestServiceInterface {
+abstract class BaseRestService implements RestServiceInterface {
   /**
    * The request from the client application.
    *
@@ -159,7 +159,7 @@ class NodeRestService implements RestServiceInterface {
       $this->entity_identifier = $entity_info['entity keys']['id'];
 
       // Setup the query object.
-      $this->query = db_select($this->route['requirements']['type'], $this->route['requirements']['type']);
+      $this->query = db_select($entity_info['base table'], $this->route['requirements']['type']);
       $this->query->fields($this->route['requirements']['type'], array($this->entity_identifier));
 
       // Load the mapper, if defined.
@@ -284,22 +284,9 @@ class NodeRestService implements RestServiceInterface {
   }
 
   /**
-   * Sets the filters for the query.
+   * Sets entity requirements.
    */
-  protected function setRequirements() {
-    // Set the entity bundle.
-    $this->query->condition($this->route['requirements']['type'] . '.type', $this->route['requirements']['bundle']);
-
-    // Set any defined entity property requirements.
-    foreach ($this->route['requirements']['properties'] as $property => $value) {
-      $this->query->condition($this->route['requirements']['type'] . '.' . $property, $value);
-    }
-
-    // Call any custom callbacks.
-    if (isset($this->route['requirements']['custom_callback'])) {
-      call_user_func($this->route['requirements']['custom_callback'], array($this->variables, $this->query));
-    }
-  }
+  abstract protected function setRequirements();
 
   /**
    * Sets the filters for the query.

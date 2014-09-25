@@ -8,7 +8,7 @@
 xautoload()->registerModulePsr4(__FILE__, 'src');
 
 use Drupal\restapi\YamlConfigDiscovery;
-use Drupal\restapi\RestServices\RestService;
+use Drupal\restapi\RestServices\NodeRestService;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
@@ -59,7 +59,7 @@ function restapi_menu() {
  */
 function restapi_callback($route_name, $etid = NULL) {
   $variables = !empty($etid) ? array('etid' => $etid) : array();
-  $service = new RestService($route_name, $variables);
+  $service = new NodeRestService($route_name, $variables);
 
   return $service->generateResponse();
 }
