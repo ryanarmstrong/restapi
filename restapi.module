@@ -75,16 +75,18 @@ function restapi_output($var) {
   }
 }
 
-function restapi_service_config($type, $id, $reset = FALSE) {
+function restapi_service_config($type, $id, $caching_enabled) {
   $cache = cache_get("$type:$id", 'cache_restapi_config');
-  if (!$cache || $reset) {
+  if (!$cache || !$caching_enabled) {
+    drupal_add_http_header('X-Drupal-Cache', 'MISS');
     $config_discovery = new YamlConfigDiscovery();
     $yaml = $config_discovery->parsedConfig('restapi.' . $type);
     $data = $yaml[$id];
-    if (!empty($data)) {
+    if (!empty($data) && $caching_enabled) {
       cache_set("$type:$id", $data, 'cache_restapi_config');
     }
   } else {
+    drupal_add_http_header('X-Drupal-Cache', 'HIT');
     $data = $cache->data;
   }
   return $data;
@@ -94,7 +96,7 @@ function restapi_service_config($type, $id, $reset = FALSE) {
  * Implements hook_flush_caches().
  */
 function restapi_flush_caches() {
-  return array('cache_restapi_config', 'cache_restapi_collections', 'cache_restapi_content');
+  return array('cache_restapi_config', 'cache_restapi_collections', 'cache_restapi_content', 'cache_restapi_headers');
 }
 
 /**
@@ -112,4 +114,38 @@ function restapi_get_empty($type, $cardinality) {
     default:
       return '';
   }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Alter the Performance configuration page to add REST API caching options.
+ */
+function restapi_form_system_performance_settings_alter(&$form, $form_state, $node) {
+  // Take control of new revision and published settings. Only Content Flow
+  // should be able to set/alter these.
+  $form['caching']['restapi'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('REST API Caching'),
+  );
+  $form['caching']['restapi']['restapi_cache_configuration'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Cache REST API configuration'),
+    '#default_value' => variable_get('restapi_cache_configuration', 0),
+  );
+  $form['caching']['restapi']['restapi_cache_collections'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Cache a requests entity results'),
+    '#default_value' => variable_get('restapi_cache_collections', 0),
+  );
+  $form['caching']['restapi']['restapi_cache_headers'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Cache a requests header results'),
+    '#default_value' => variable_get('restapi_cache_headers', 0),
+  );
+  $form['caching']['restapi']['restapi_cache_content'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Cache formatted entities.'),
+    '#default_value' => variable_get('restapi_cache_content', 0),
+  );
 }

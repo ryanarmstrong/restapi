@@ -13,10 +13,14 @@ use Drupal\restapi\RestServiceInterface;
  */
 class EntityRestService implements RestServiceInterface {
   /**
-   * The request from the client application.
+   * The caching options to use.
    *
-   * Stores the $_SERVER superglobal for use throughout the generation of the
-   * response.
+   * @var array
+   */
+  protected $caching_settings;
+
+  /**
+   * The entity key identifier.
    *
    * @var array
    */
@@ -44,13 +48,6 @@ class EntityRestService implements RestServiceInterface {
   protected $filters = array();
 
   /**
-   * The filters supported by the service.
-   *
-   * @var array
-   */
-  protected $formattedResponse;
-
-  /**
    * The headers of the reponse.
    *
    * @var array
@@ -58,19 +55,11 @@ class EntityRestService implements RestServiceInterface {
   protected $headers = array();
 
   /**
-   * The sorters mappers used by the service.
+   * The mappers used by the service.
    *
    * @var array
    */
   protected $mappings;
-
-  /**
-   * Filters with NOT conditions on a field with multiple values must be handled
-   * seperately. This contains any that need to be run.
-   *
-   * @var array
-   */
-  protected $postQueryFilters = array();
 
   /**
    * The EntityFieldQuery used to return the requested resources.
@@ -133,18 +122,6 @@ class EntityRestService implements RestServiceInterface {
   /**
    * An array of options passed to the Service.
    *
-   * - supported_requests
-   *     The types of request methods that this service can support. Available
-   *     options are GET, POST, PUT, DELETE, PATCH
-   * - supported_formats
-   *     The different formats that are supported, such as application/json.
-   * - entity_type
-   *     The type of entity that the service is requesting such as node, user,
-   *     or taxonomy.
-   * - entity_bundle
-   *     The bundle type that the service is requesting. The node/content type
-   *     or the vocabulary are common uses.
-   *
    * @var array
    */
   public $variables;
@@ -170,7 +147,8 @@ class EntityRestService implements RestServiceInterface {
     $this->query_parameters = drupal_get_query_parameters();
 
     // Store the configuration for this route.
-    $this->route = restapi_service_config('routes', $route_id);
+    $this->getCachingSettings();
+    $this->route = restapi_service_config('routes', $route_id, $this->caching_settings['restapi_cache_configuration']);
 
     // Validate the response. If it doesn't validate we don't need to do anything.
     $this->validation = $this->validateRequest();
@@ -205,13 +183,13 @@ class EntityRestService implements RestServiceInterface {
    */
   public function generateResponse() {
     if (empty($this->etids) && $this->validation === TRUE) {
-      $this->retrieveEntities();
-      $this->setHeaders();
+      $this->retrieveEntities($this->caching_settings['restapi_cache_collections']);
+      $this->setHeaders($this->caching_settings['restapi_cache_headers']);
     } elseif($this->validation !== TRUE) {
       return $this->validation;
     }
-    $this->formatResponse();
-    return $this->formattedResponse;
+    $this->formatResponse($this->caching_settings['restapi_cache_content']);
+    return $this->response;
   }
 
   /**
@@ -229,14 +207,16 @@ class EntityRestService implements RestServiceInterface {
     return $this->etids;
   }
 
-  public function setHeaders() {
+  public function setHeaders($caching_enabled) {
     $path = $_SERVER['REQUEST_URI'];
     $cache = cache_get("$path", 'cache_restapi_headers');
-    if (!$cache) {
-      if (!empty($this->headers)) {
+    if (!$cache || !$caching_enabled) {
+      $this->setDrupalCacheHeader('MISS');
+      if (!empty($this->headers) && $caching_enabled) {
         cache_set("$path", $this->headers, 'cache_restapi_headers');
       }
     } else {
+      $this->setDrupalCacheHeader('HIT');
       $this->headers = $cache->data;
     }
     foreach ($this->headers as $key => $value) {
@@ -278,10 +258,11 @@ class EntityRestService implements RestServiceInterface {
    * @return array
    *   Returns an array of formatted entities.
    */
-  protected function retrieveEntities() {
+  protected function retrieveEntities($caching_enabled) {
     $path = $_SERVER['REQUEST_URI'];
     $cache = cache_get("$path", 'cache_restapi_collections');
-    if (!$cache) {
+    if (!$cache || !$caching_enabled) {
+      $this->setDrupalCacheHeader('MISS');
       $this->setRequirements();
       // Call custom requirement callback if provided.
       if (isset($this->route['requirements']['custom_callback'])) {
@@ -296,10 +277,12 @@ class EntityRestService implements RestServiceInterface {
         $this->etids[$value->$entity_identifier] = $value->$entity_identifier;
       }
 
-      if (!empty($this->etids)) {
+      if (!empty($this->etids) && $caching_enabled) {
         cache_set("$path", $this->etids, 'cache_restapi_collections');
+        $this->headers['ETag'] = hash('sha256', serialize($this->etids));
       }
     } else {
+      $this->setDrupalCacheHeader('HIT');
       $this->etids = $cache->data;
     }
   }
@@ -371,11 +354,12 @@ class EntityRestService implements RestServiceInterface {
    * @return array
    *   A node formatted into an array.
    */
-  protected function formatResponse() {
+  protected function formatResponse($caching_enabled) {
     foreach ($this->etids as $etid) {
       $mapper = $this->requestMapper();
       $cache = cache_get("$etid:$mapper", 'cache_restapi_content');
-      if (!$cache) {
+      if (!$cache || !$caching_enabled) {
+        $this->setDrupalCacheHeader('MISS');
         $entity = reset(entity_load($this->route['requirements']['type'], array($etid)));
         // Use the provided mapping.
         if (isset($this->mappings)) {
@@ -386,14 +370,17 @@ class EntityRestService implements RestServiceInterface {
             $formatter = new $formatter_type($entity, $this->route['requirements']['type'], $field_name);
             $formatted_entity->$map['label'] = $formatter->format();
           }
-          $this->formattedResponse[] = $formatted_entity;
-          cache_set("$etid:$mapper", $formatted_entity, 'cache_restapi_content');
+          $this->response[] = $formatted_entity;
+          if ($caching_enabled) {
+            cache_set("$etid:$mapper", $formatted_entity, 'cache_restapi_content');
+          }
         } else {
           // Otherwise just return the unformatted entities.
-          $this->formattedResponse[] = $entity;
+          $this->response[] = $entity;
         }
       } else {
-        $this->formattedResponse[] = $cache->data;
+        $this->setDrupalCacheHeader('HIT');
+        $this->response[] = $cache->data;
       }
     }
   }
@@ -436,5 +423,29 @@ class EntityRestService implements RestServiceInterface {
     }
     // Load the default mapper defined by the route.
     return !empty($this->route['defaults']['mapper']) ? $this->route['defaults']['mapper'] : '';
+  }
+
+  /**
+   * Get the caching settings.
+   * @return string
+   *   The name of the mapper to use.
+   */
+  protected function getCachingSettings() {
+    $this->caching_settings['restapi_cache_configuration'] = variable_get('restapi_cache_configuration', 0);
+    $this->caching_settings['restapi_cache_collections'] = variable_get('restapi_cache_collections', 0);
+    $this->caching_settings['restapi_cache_headers'] = variable_get('restapi_cache_headers', 0);
+    $this->caching_settings['restapi_cache_content'] = variable_get('restapi_cache_content', 0);
+  }
+
+  /**
+   * Determins the correct X-Drupal-Cache setting.
+   * @return string
+   *   The name of the mapper to use.
+   */
+  protected function setDrupalCacheHeader($result) {
+    $current_header = drupal_get_http_header('X-Drupal-Cache');
+    if ($current_header != 'MISS') {
+      drupal_add_http_header('X-Drupal-Cache', $result);
+    }
   }
 }
