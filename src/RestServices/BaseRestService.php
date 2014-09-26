@@ -44,6 +44,13 @@ abstract class BaseRestService implements RestServiceInterface {
   protected $filters = array();
 
   /**
+   * The filters supported by the service.
+   *
+   * @var array
+   */
+  protected $formattedResponse;
+
+  /**
    * The headers of the reponse.
    *
    * @var array
@@ -203,7 +210,8 @@ abstract class BaseRestService implements RestServiceInterface {
     } elseif($this->validation !== TRUE) {
       return $this->validation;
     }
-    return $this->formatResponse();
+    $this->formatResponse();
+    return $this->formattedResponse;
   }
 
   /**
@@ -359,33 +367,30 @@ abstract class BaseRestService implements RestServiceInterface {
    *   A node formatted into an array.
    */
   protected function formatResponse() {
-    $formatted_entities = array();
     foreach ($this->etids as $etid) {
       $mapper = $this->requestMapper();
       $cache = cache_get("$etid:$mapper", 'cache_restapi_content');
       if (!$cache) {
-        $node = node_load($etid);
+        $entity = reset(entity_load($this->route['requirements']['type'], array($etid)));
         // Use the provided mapping.
         if (isset($this->mappings)) {
           $formatted_entity = new \stdClass();
           foreach ($this->mappings as $field_name => $map) {
             // Check for a custom formatter, use FormatterBase otherwise. Then format the field.
             $formatter_type = isset($map['formatter']) ? $map['formatter'] : '\Drupal\restapi\Formatters\FormatterBase';
-            $formatter = new $formatter_type($node, $this->route['requirements']['type'], $field_name);
+            $formatter = new $formatter_type($entity, $this->route['requirements']['type'], $field_name);
             $formatted_entity->$map['label'] = $formatter->format();
           }
-          $formatted_entities[] = $formatted_entity;
+          $this->formattedResponse[] = $formatted_entity;
           cache_set("$etid:$mapper", $formatted_entity, 'cache_restapi_content');
         } else {
           // Otherwise just return the unformatted entities.
-          $formatted_entities[] = $unformatted_entity;
+          $this->formattedResponse[] = $entity;
         }
       } else {
-        $formatted_entities[] = $cache->data;
+        $this->formattedResponse[] = $cache->data;
       }
     }
-    
-    return $formatted_entities;
   }
 
   /**
