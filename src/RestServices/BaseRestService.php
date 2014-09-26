@@ -23,6 +23,13 @@ abstract class BaseRestService implements RestServiceInterface {
   protected $entity_identifier;
 
   /**
+   * The entity info for the entity type being used in the service.
+   *
+   * @var array
+   */
+  protected $entity_info;
+
+  /**
    * The entity IDs of the requested resources.
    *
    * @var array
@@ -162,12 +169,12 @@ abstract class BaseRestService implements RestServiceInterface {
     $this->validation = $this->validateRequest();
     if ($this->validation === TRUE) {
       // Set the entity identifier.
-      $entity_info = entity_get_info($this->route['requirements']['type']);
-      $this->entity_identifier = $entity_info['entity keys']['id'];
+      $this->entity_info = entity_get_info($this->route['requirements']['type']);
+      $this->entity_identifier = $this->entity_info['entity keys']['id'];
 
       // Setup the query object.
-      $this->query = db_select($entity_info['base table'], $this->route['requirements']['type']);
-      $this->query->fields($this->route['requirements']['type'], array($this->entity_identifier));
+      $this->query = db_select($this->entity_info['base table']);
+      $this->query->fields($this->entity_info['base table'], array($this->entity_identifier));
 
       // Load the mapper, if defined.
       $this->mappings = restapi_service_config('mappers', $this->requestMapper());
@@ -322,7 +329,7 @@ abstract class BaseRestService implements RestServiceInterface {
       // If a table is given, set the orderby and define the table/value to use.
       if (isset($router_sorter['table']) && isset($router_sorter['column']) && isset($router_sorter['sort'])) {
         // Join the needed table and set the orderby.
-        $this->query->join($router_sorter['table'], $router_sorter['table'], $router_sorter['table'] . '.entity_id = ' . $this->route['requirements']['type'] . '.' . $this->entity_identifier);
+        $this->query->join($router_sorter['table'], $router_sorter['table'], $router_sorter['table'] . '.entity_id = ' . $this->entity_info['base table'] . '.' . $this->entity_identifier);
         $orderby = $router_sorter['table'] . '.' . $router_sorter['column'];
       }
       // Set the sort.
