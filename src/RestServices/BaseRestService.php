@@ -307,7 +307,12 @@ abstract class BaseRestService implements RestServiceInterface {
   /**
    * Sets entity requirements.
    */
-  abstract protected function setRequirements();
+  protected function setRequirements() {
+    // Set any defined entity property requirements.
+    foreach ($this->route['requirements']['properties'] as $property => $value) {
+      $this->query->condition($this->entity_info['base table'] . '.' . $property, $value);
+    }
+  }
 
   /**
    * Sets the filters for the query.
