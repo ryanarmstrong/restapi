@@ -394,6 +394,7 @@ class EntityRestService implements RestServiceInterface {
     foreach ($this->filters as $filter_name => $filter) {
       if (isset($filter['default'])) {
         $filter_list[$filter_name] = $filter;
+        $filter_list[$filter_name]['parameter'] = $filter_name;
         $filter_list[$filter_name]['value'] = $filter['default'];
       }
     }
@@ -401,6 +402,7 @@ class EntityRestService implements RestServiceInterface {
     foreach ($this->query_parameters as $filter_name => $value) {
       if (isset($this->filters[$filter_name])) {
         $filter_list[$filter_name] = $this->filters[$filter_name];
+        $filter_list[$filter_name]['parameter'] = $filter_name;
         $filter_list[$filter_name]['value'] = $value;
       }
     }
