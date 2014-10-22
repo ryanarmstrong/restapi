@@ -357,7 +357,7 @@ class EntityRestService implements RestServiceInterface {
   protected function formatResponse($caching_enabled) {
     foreach ($this->etids as $etid) {
       $mapper = $this->requestMapper();
-      $cache = cache_get("$etid:$mapper", 'cache_restapi_content');
+      $cache = cache_get("$etid:" . $this->variables['region'] . ":$mapper", 'cache_restapi_content');
       if (!$cache || !$caching_enabled) {
         $this->setDrupalCacheHeader('MISS');
         $entity = reset(entity_load($this->route['requirements']['type'], array($etid)));
@@ -372,7 +372,7 @@ class EntityRestService implements RestServiceInterface {
           }
           $this->response[] = $formatted_entity;
           if ($caching_enabled) {
-            cache_set("$etid:$mapper", $formatted_entity, 'cache_restapi_content');
+            cache_set("$etid:" . $this->variables['region'] . ":$mapper", $formatted_entity, 'cache_restapi_content');
           }
         } else {
           // Otherwise just return the unformatted entities.
