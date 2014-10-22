@@ -53,6 +53,13 @@ class FormatterBase implements FormatterInterface {
   public $formatted_value;
 
   /**
+   * An array of variables passed by the request.
+   *
+   * @var array
+   */
+  public $variables;
+
+  /**
    * FormatterBase contructor.
    *
    * @param EntityObject $entity
@@ -62,7 +69,8 @@ class FormatterBase implements FormatterInterface {
    * @param string $key
    *   The key of the field or property to format.
    */
-  public function __construct($entity, $entity_type, $key) {
+  public function __construct($entity, $entity_type, $key, $variables) {
+    $this->variables = $variables;
     $this->entity = $entity;
     $this->wrapper = entity_metadata_wrapper($entity_type, $entity);
     $this->value = $this->wrapper->$key->value();
