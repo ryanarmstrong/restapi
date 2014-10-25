@@ -189,7 +189,7 @@ class EntityRestService implements RestServiceInterface {
       return $this->validation;
     }
     $this->formatResponse($this->caching_settings['restapi_cache_content']);
-    return $this->response;
+    return $this->getResponse();
   }
 
   /**
@@ -370,19 +370,44 @@ class EntityRestService implements RestServiceInterface {
             $formatter = new $formatter_type($entity, $this->route['requirements']['type'], $field_name, $this->variables);
             $formatted_entity->$map['label'] = $formatter->format();
           }
-          $this->response[] = $formatted_entity;
+          $this->setResponse($formatted_entity);
           if ($caching_enabled) {
             cache_set($this->route['requirements']['type'] . ':' . $this->route['requirements']['properties']['type'] . ":$etid:" . $this->variables['region'] . ":$mapper", $formatted_entity, 'cache_restapi_content');
           }
         } else {
           // Otherwise just return the unformatted entities.
-          $this->response[] = $entity;
+          $this->setResponse($entity);
         }
       } else {
         $this->setDrupalCacheHeader('HIT');
-        $this->response[] = $cache->data;
+        $this->setResponse($cache->data);
       }
     }
+  }
+
+  /**
+   * Determins the correct X-Drupal-Cache setting.
+   * @return string
+   *   The name of the mapper to use.
+   */
+  protected function setResponse($item) {
+    switch ($this->route['cardinality']) {
+      case 'collection':
+        $this->response[] = $item;
+        break;
+      case 'singleton':
+        $this->response = $item;
+        break;
+    }
+  }
+
+  /**
+   * Determins the correct X-Drupal-Cache setting.
+   * @return string
+   *   The name of the mapper to use.
+   */
+  protected function getResponse() {
+    return $this->response;
   }
 
   /**
