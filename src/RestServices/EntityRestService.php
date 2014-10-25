@@ -153,6 +153,16 @@ class EntityRestService implements RestServiceInterface {
     // Validate the response. If it doesn't validate we don't need to do anything.
     $this->validation = $this->validateRequest();
     if ($this->validation === TRUE) {
+      // Initialize the $response variable.
+      switch ($this->route['cardinality']) {
+        case 'collection':
+          $this->response = array();
+          break;
+        case 'singleton':
+          $this->response = new \stdClass();
+          break;
+      }
+
       // Set the entity identifier.
       $this->entity_info = entity_get_info($this->route['requirements']['type']);
       $this->entity_identifier = $this->entity_info['entity keys']['id'];
