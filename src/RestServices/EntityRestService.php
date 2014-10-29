@@ -194,11 +194,12 @@ class EntityRestService implements RestServiceInterface {
   public function generateResponse() {
     if (empty($this->etids) && $this->validation === TRUE) {
       $this->retrieveEntities($this->caching_settings['restapi_cache_collections']);
-      $this->setHeaders($this->caching_settings['restapi_cache_headers']);
     } elseif($this->validation !== TRUE) {
       return $this->validation;
     }
     $this->formatResponse($this->caching_settings['restapi_cache_content']);
+    $this->headers['ETag'] = hash('sha256', serialize($this->response));
+    $this->setHeaders($this->caching_settings['restapi_cache_headers']);
     return $this->getResponse();
   }
 
@@ -289,7 +290,6 @@ class EntityRestService implements RestServiceInterface {
 
       if (!empty($this->etids) && $caching_enabled) {
         cache_set("$path", $this->etids, 'cache_restapi_collections');
-        $this->headers['ETag'] = hash('sha256', serialize($this->etids));
       }
     } else {
       $this->setDrupalCacheHeader('HIT');
