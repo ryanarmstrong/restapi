@@ -172,16 +172,16 @@ class EntityRestService implements RestServiceInterface {
       $this->query->fields($this->entity_info['base table'], array($this->entity_identifier));
 
       // Load the mapper, if defined.
-      $this->mappings = restapi_service_config('mappers', $this->requestMapper());
+      $this->mappings = restapi_service_config('mappers', $this->requestMapper(), $this->caching_settings['restapi_cache_configuration']);
 
       // Load defined filters and save the ones to use for this route.
       if (isset($this->route['defaults']['filter'])) {
-        $this->filters = restapi_service_config('filters', $this->route['defaults']['filter']);
+        $this->filters = restapi_service_config('filters', $this->route['defaults']['filter'], $this->caching_settings['restapi_cache_configuration']);
       }
 
       // Store the sorters for this route.
       if (isset($this->route['defaults']['sorter'])) {
-        $this->sorters = restapi_service_config('sorters', $this->route['defaults']['sorter']);
+        $this->sorters = restapi_service_config('sorters', $this->route['defaults']['sorter'], $this->caching_settings['restapi_cache_configuration']);
       }
     }
   }
