@@ -222,12 +222,12 @@ class EntityRestService implements RestServiceInterface {
     $path = $_SERVER['REQUEST_URI'];
     $cache = cache_get("$path", 'cache_restapi_headers');
     if (!$cache || !$caching_enabled) {
-      $this->setDrupalCacheHeader('MISS');
+      //$this->setDrupalCacheHeader('MISS');
       if (!empty($this->headers) && $caching_enabled) {
         cache_set("$path", $this->headers, 'cache_restapi_headers');
       }
     } else {
-      $this->setDrupalCacheHeader('HIT');
+      //$this->setDrupalCacheHeader('HIT');
       $this->headers = $cache->data;
     }
     foreach ($this->headers as $key => $value) {
@@ -273,7 +273,7 @@ class EntityRestService implements RestServiceInterface {
     $path = $_SERVER['REQUEST_URI'];
     $cache = cache_get("$path", 'cache_restapi_collections');
     if (!$cache || !$caching_enabled) {
-      $this->setDrupalCacheHeader('MISS');
+      //$this->setDrupalCacheHeader('MISS');
       $this->setRequirements();
       // Call custom requirement callback if provided.
       if (isset($this->route['requirements']['custom_callback'])) {
@@ -295,7 +295,7 @@ class EntityRestService implements RestServiceInterface {
         $this->headers['Expires'] = date('D, d M Y G:i:s e', time() + 86400);
       }
     } else {
-      $this->setDrupalCacheHeader('HIT');
+      //$this->setDrupalCacheHeader('HIT');
       $this->etids = $cache->data;
     }
   }
@@ -372,7 +372,7 @@ class EntityRestService implements RestServiceInterface {
       $mapper = $this->requestMapper();
       $cache = cache_get($this->route['requirements']['type'] . ':' . $this->route['requirements']['bundle'] . ":$etid:" . $this->variables['region'] . ":$mapper", 'cache_restapi_content');
       if (!$cache || !$caching_enabled) {
-        $this->setDrupalCacheHeader('MISS');
+        //$this->setDrupalCacheHeader('MISS');
         $entity = reset(entity_load($this->route['requirements']['type'], array($etid)));
         // Use the provided mapping.
         if (isset($this->mappings)) {
@@ -392,7 +392,7 @@ class EntityRestService implements RestServiceInterface {
           $this->setResponse($entity);
         }
       } else {
-        $this->setDrupalCacheHeader('HIT');
+        //$this->setDrupalCacheHeader('HIT');
         $this->setResponse($cache->data);
       }
     }

@@ -78,7 +78,7 @@ function restapi_output($var) {
 function restapi_service_config($type, $id, $caching_enabled) {
   $cache = cache_get("$type:$id", 'cache_restapi_config');
   if (!$cache || !$caching_enabled) {
-    drupal_add_http_header('X-Drupal-Cache', 'MISS');
+    //drupal_add_http_header('X-Drupal-Cache', 'MISS');
     $config_discovery = new YamlConfigDiscovery();
     $yaml = $config_discovery->parsedConfig('restapi.' . $type);
     $data = $yaml[$id];
