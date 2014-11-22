@@ -93,13 +93,6 @@ function restapi_service_config($type, $id, $caching_enabled) {
 }
 
 /**
- * Implements hook_flush_caches().
- */
-function restapi_flush_caches() {
-  return array('cache_restapi_config', 'cache_restapi_collections', 'cache_restapi_content', 'cache_restapi_headers');
-}
-
-/**
  * Determin the proper empty variable.
  */
 function restapi_get_empty($type, $cardinality) {
