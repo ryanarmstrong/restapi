@@ -278,8 +278,15 @@ class EntityRestService implements RestServiceInterface {
       if (isset($this->route['requirements']['custom_callback'])) {
         call_user_func($this->route['requirements']['custom_callback'], array($this->variables, $this->query));
       }
+
+      // Filter the response
       $this->filterResponse();
+      // Set the total count header now that the filters have been applied.
+      $this->headers['X-Total-Count'] = $this->getTotalCount();
+
+      // Sort and limit the response
       $this->sortResponse();
+      $this->setRange();
 
       $results = $this->query->execute();
       $entity_identifier = $this->entity_identifier;
@@ -343,21 +350,34 @@ class EntityRestService implements RestServiceInterface {
       $sort = isset($this->query_parameters['sort']) ? $this->query_parameters['sort'] : $router_sorter['sort'];
     }
 
-    // Set the limit.
-    $limit = isset($this->query_parameters['limit']) ? $this->query_parameters['limit'] : $this->route['defaults']['limit'];
-
     // Now add the orderBy commands.
     if (isset($orderby) && isset($sort)) {
       $this->query->orderBy($orderby, $sort);
     }
+  }
 
-    $this->headers['X-Total-Count'] = $this->query->countQuery()->execute()->fetchField();
-
+  /**
+   * Sets the range for the query.
+   */
+  protected function setRange() {
+    $limit = 0;
+    if (!empty($this->query_parameters['limit'])) {
+      $limit = $this->query_parameters['limit'];
+    } elseif (!empty($this->route['defaults']['limit'])) {
+      $limit = $this->route['defaults']['limit'];
+    }
     $start = isset($this->query_parameters['start']) ? $this->query_parameters['start'] : 0;
     // Set the sorting if a limit has been provided.
-    if (isset($limit)) {
+    if ($limit != 0) {
       $this->query->range($start, $limit);
     }
+  }
+
+  /**
+   * Returns the total count of a query.
+   */
+  protected function getTotalCount() {
+    return $this->query->countQuery()->execute()->fetchField();
   }
 
   /**
