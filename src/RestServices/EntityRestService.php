@@ -273,7 +273,6 @@ class EntityRestService implements RestServiceInterface {
     $path = $_SERVER['REQUEST_URI'];
     $cache = cache_get("$path", 'cache_restapi_collections');
     if (!$cache || !$caching_enabled) {
-      //$this->setDrupalCacheHeader('MISS');
       $this->setRequirements();
       // Call custom requirement callback if provided.
       if (isset($this->route['requirements']['custom_callback'])) {
@@ -295,7 +294,6 @@ class EntityRestService implements RestServiceInterface {
         $this->headers['Expires'] = date('D, d M Y G:i:s e', time() + 86400);
       }
     } else {
-      //$this->setDrupalCacheHeader('HIT');
       $this->etids = $cache->data;
     }
   }
@@ -372,7 +370,6 @@ class EntityRestService implements RestServiceInterface {
       $mapper = $this->requestMapper();
       $cache = cache_get($this->route['requirements']['type'] . ':' . $this->route['requirements']['bundle'] . ":$etid:" . $this->variables['region'] . ":$mapper", 'cache_restapi_content');
       if (!$cache || !$caching_enabled) {
-        //$this->setDrupalCacheHeader('MISS');
         $entity = reset(entity_load($this->route['requirements']['type'], array($etid)));
         // Use the provided mapping.
         if (isset($this->mappings)) {
@@ -392,7 +389,6 @@ class EntityRestService implements RestServiceInterface {
           $this->setResponse($entity);
         }
       } else {
-        //$this->setDrupalCacheHeader('HIT');
         $this->setResponse($cache->data);
       }
     }
@@ -475,17 +471,5 @@ class EntityRestService implements RestServiceInterface {
     $this->caching_settings['restapi_cache_collections'] = variable_get('restapi_cache_collections', 0);
     $this->caching_settings['restapi_cache_headers'] = variable_get('restapi_cache_headers', 0);
     $this->caching_settings['restapi_cache_content'] = variable_get('restapi_cache_content', 0);
-  }
-
-  /**
-   * Determins the correct X-Drupal-Cache setting.
-   * @return string
-   *   The name of the mapper to use.
-   */
-  protected function setDrupalCacheHeader($result) {
-    $current_header = drupal_get_http_header('X-Drupal-Cache');
-    if ($current_header != 'MISS') {
-      drupal_add_http_header('X-Drupal-Cache', $result);
-    }
   }
 }
