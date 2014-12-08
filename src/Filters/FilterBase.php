@@ -37,5 +37,5 @@ abstract class FilterBase implements FilterInterface {
    * @return object
    *   The modified query object.
    */
-  abstract public function filterQuery(&$query);
+  abstract public function filterQuery(&$query, $variables);
 }

@@ -14,5 +14,5 @@ interface FilterInterface {
    * @return object
    *   The modified query object.
    */
-  public function filterQuery(&$query);
+  public function filterQuery(&$query, $variables);
 }
