@@ -167,6 +167,10 @@ class EntityRestService implements RestServiceInterface {
       $this->entity_info = entity_get_info($this->route['requirements']['type']);
       $this->entity_identifier = $this->entity_info['entity keys']['id'];
 
+      // Add some information to the variables array.
+      $this->variables['type'] = $this->route['requirements']['type'];
+      $this->variables['bundle'] = $this->route['requirements']['bundle'];
+
       // Setup the query object.
       $this->query = db_select($this->entity_info['base table']);
       $this->query->fields($this->entity_info['base table'], array($this->entity_identifier));
