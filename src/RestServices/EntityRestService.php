@@ -301,7 +301,7 @@ class EntityRestService implements RestServiceInterface {
       if (!empty($this->etids) && $caching_enabled) {
         cache_set("$path", $this->etids, 'cache_restapi_collections');
         $this->headers['Cache-Control'] = 'public,max-age=86400,s-maxage=86400';
-        $this->headers['Last-Modified'] = date('D, d M Y G:i:s e');
+        $this->headers['Last-Modified'] = date('D, d M Y G:i:s T');
         $this->headers['Expires'] = date('D, d M Y G:i:s e', time() + 86400);
       }
     } else {
