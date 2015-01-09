@@ -115,8 +115,29 @@ function restapi_get_empty($type, $cardinality) {
  * Alter the Performance configuration page to add REST API caching options.
  */
 function restapi_form_system_performance_settings_alter(&$form, $form_state, $node) {
-  // Take control of new revision and published settings. Only Content Flow
-  // should be able to set/alter these.
+  // Clear REST API caches.
+  $form['clear_cache']['clear_restapi_config'] = array(
+    '#type' => 'submit',
+    '#value' => t('Clear REST API config cache'),
+    '#submit' => array('clear_restapi_config_submit'),
+  );
+  $form['clear_cache']['clear_restapi_collections'] = array(
+    '#type' => 'submit',
+    '#value' => t('Clear REST API collections cache'),
+    '#submit' => array('clear_restapi_config_submit'),
+  );
+  $form['clear_cache']['clear_restapi_headers'] = array(
+    '#type' => 'submit',
+    '#value' => t('Clear REST API headers cache'),
+    '#submit' => array('clear_restapi_config_submit'),
+  );
+  $form['clear_cache']['clear_restapi_content'] = array(
+    '#type' => 'submit',
+    '#value' => t('Clear REST API content cache'),
+    '#submit' => array('clear_restapi_config_submit'),
+  );
+
+  // Enable/Disable REST API caching.
   $form['caching']['restapi'] = array(
     '#type' => 'fieldset',
     '#title' => t('REST API Caching'),
@@ -141,4 +162,30 @@ function restapi_form_system_performance_settings_alter(&$form, $form_state, $no
     '#title' => t('Cache formatted entities.'),
     '#default_value' => variable_get('restapi_cache_content', 0),
   );
+}
+
+/**
+ * Submit callback; clear REST API caches.
+ *
+ * @ingroup forms
+ */
+function clear_restapi_config_submit($form, &$form_state) {
+  switch ($form_state['clicked_button']['#id']) {
+    case 'edit-clear-restapi-config':
+      cache_clear_all('*', 'cache_restapi_config', TRUE);
+      drupal_set_message(t('REST API Config Caches cleared.'));
+      break;
+    case 'edit-clear-restapi-collections':
+      cache_clear_all('*', 'cache_restapi_collections', TRUE);
+      drupal_set_message(t('REST API Collection Caches cleared.'));
+      break;
+    case 'edit-clear-restapi-headers':
+      cache_clear_all('*', 'cache_restapi_headers', TRUE);
+      drupal_set_message(t('REST API Header Caches cleared.'));
+      break;
+    case 'edit-clear-restapi-content':
+      cache_clear_all('*', 'cache_restapi_content', TRUE);
+      drupal_set_message(t('REST API Content Caches cleared.'));
+      break;
+  }
 }
