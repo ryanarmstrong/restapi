@@ -399,6 +399,9 @@ class EntityRestService implements RestServiceInterface {
         if (isset($this->mappings)) {
           $formatted_entity = new \stdClass();
           foreach ($this->mappings as $field_name => $map) {
+            // Add the mapper to the variables for later use.
+            $this->variables['map'] = $map;
+
             // Check for a custom formatter, use FormatterBase otherwise. Then format the field.
             $formatter_type = isset($map['formatter']) ? $map['formatter'] : '\Drupal\restapi\Formatters\FormatterBase';
             $formatter = new $formatter_type($entity, $this->route['requirements']['type'], $field_name, $this->variables);
