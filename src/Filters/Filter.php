@@ -15,28 +15,28 @@ class Filter implements FilterInterface {
    *
    * @var array
    */
-  private $entity_info;
+   protected $entity_info;
 
   /**
    * The filter being used.
    *
    * @var array
    */
-  private $filter;
+   protected $filter;
 
   /**
    * The route calling the filter.
    *
    * @var array
    */
-  private $route;
+   protected $route;
 
   /**
    * The values that were passed.
    *
    * @var array
    */
-  private $value;
+  protected $value;
 
   /**
    * Filter contructor.
