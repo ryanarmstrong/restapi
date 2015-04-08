@@ -326,6 +326,12 @@ class EntityRestService implements RestServiceInterface {
     // Loop through the filters.
     $filter_list = $this->buildFilterList();
     foreach ($filter_list as $filter_name => $filter_definition) {
+      // Add route information.
+      $filter_definition['route'] = $this->route;
+
+      // Add entity information.
+      $filter_definition['entity_info'] = $this->entity_info;
+
       // Set the filter and run it.
       $filter_type = isset($filter_definition['filter']) ? $filter_definition['filter'] : '\Drupal\restapi\Filters\FilterBase';
       $filter = new $filter_type($filter_definition);
