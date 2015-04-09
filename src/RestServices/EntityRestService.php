@@ -348,7 +348,7 @@ class EntityRestService implements RestServiceInterface {
     if (isset($router_sorter)) {
       // If a property sorter is given, set the orderby.
       if (isset($router_sorter['property']) && isset($router_sorter['sort'])) {
-        $orderby = $router_sorter['property'];
+        $orderby = $this->entity_info['base table'] . '.' . $router_sorter['property'];
       }
       // If a table is given, set the orderby and define the table/value to use.
       if (isset($router_sorter['table']) && isset($router_sorter['column']) && isset($router_sorter['sort'])) {
