@@ -25,6 +25,13 @@ class FormatterBase implements FormatterInterface {
   protected $field_info;
 
   /**
+   * The field instance info.
+   *
+   * @var object
+   */
+  protected $field_instance_info;
+
+  /**
    * The field type.
    *
    * @var string
@@ -83,6 +90,7 @@ class FormatterBase implements FormatterInterface {
     $this->wrapper = entity_metadata_wrapper($entity_type, $entity);
     $this->value = $this->wrapper->$key->value();
     $this->field_info = field_info_field($key);
+    $this->field_instance_info = field_info_instance($variables['type'], $key, $variables['bundle']);
     // Handle variable casting.
     $this->type = $this->wrapper->$key->type();
     switch ($this->type) {
