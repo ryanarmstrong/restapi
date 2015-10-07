@@ -265,6 +265,15 @@ class EntityRestService implements RestServiceInterface {
       );
     }
 
+    // Validate that the requested entity ID exists if service is a singleton.
+    if (($this->route['cardinality'] == 'singleton') && (!$this->checkNodeId())) {
+      http_response_code(404);
+      return array(
+        'status' => 'invalid_entity_id',
+        'message' => t('The entity could not be found.'),
+      );
+    }
+
     return TRUE;
   }
 
@@ -504,5 +513,14 @@ class EntityRestService implements RestServiceInterface {
     $this->caching_settings['restapi_cache_collections'] = variable_get('restapi_cache_collections', 0);
     $this->caching_settings['restapi_cache_headers'] = variable_get('restapi_cache_headers', 0);
     $this->caching_settings['restapi_cache_content'] = variable_get('restapi_cache_content', 0);
+  }
+
+  /**
+   * Get the caching settings.
+   * @return string
+   *   The name of the mapper to use.
+   */
+  protected function checkNodeId() {
+    return db_query("SELECT 1 FROM node WHERE nid = :nid AND type = :type", array(':nid' => $this->variables['etid'], ':type' => $this->route['requirements']['bundle']))->fetchField();
   }
 }
