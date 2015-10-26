@@ -266,7 +266,8 @@ class EntityRestService implements RestServiceInterface {
     }
 
     // Validate that the requested entity ID exists if service is a singleton.
-    if (($this->route['cardinality'] == 'singleton') && (!$this->checkNodeId())) {
+    // @todo Remove UI Component reference.
+    if (($this->route['cardinality'] == 'singleton' && $this->route['requirements']['bundle'] != 'ui_component') && (!$this->checkNodeId())) {
       http_response_code(404);
       return array(
         'status' => 'invalid_entity_id',
