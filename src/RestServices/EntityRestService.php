@@ -521,6 +521,6 @@ class EntityRestService implements RestServiceInterface {
    *   The name of the mapper to use.
    */
   protected function checkNodeId() {
-    return db_query("SELECT 1 FROM node WHERE nid = :nid AND type = :type", array(':nid' => $this->variables['etid'], ':type' => $this->route['requirements']['bundle']))->fetchField();
+    return db_query("SELECT 1 FROM node WHERE nid = :nid AND type = :type AND status = 1", array(':nid' => $this->variables['etid'], ':type' => $this->route['requirements']['bundle']))->fetchField();
   }
 }
